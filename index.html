@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Graceful Celestial - Textile Vectorizer</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <!-- ImageTracer -->
+    <script src="https://cdn.jsdelivr.net/npm/imagetracerjs@1.2.6/imagetracer_v1.2.6.js"></script>
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">
+            Graceful Celestial
+        </div>
+
+        <p>Textile & Batik Vectorizer</p>
+    </header>
+
+
+    <main>
+
+        <section class="hero">
+
+            <h1>
+                Photo to Textile Vector
+            </h1>
+
+            <p>
+                Turn your Batik and Textile photos into clean vector artwork.
+            </p>
+
+        </section>
+
+
+        <!-- Upload -->
+
+        <section class="upload-box">
+
+            <h2>1. Upload your image</h2>
+
+            <label for="imageInput" class="upload-button">
+                📷 Choose Image
+            </label>
+
+            <input
+                type="file"
+                id="imageInput"
+                accept="image/png,image/jpeg,image/jpg"
+            >
+
+            <p id="fileName">
+                No image selected
+            </p>
+
+        </section>
+
+
+        <!-- Settings -->
+
+        <section class="settings">
+
+            <h2>2. Vector Settings</h2>
+
+            <div class="setting">
+
+                <label>
+                    Threshold
+                </label>
+
+                <input
+                    type="range"
+                    id="threshold"
+                    min="20"
+                    max="240"
+                    value="128"
+                >
+
+                <span id="thresholdValue">
+                    128
+                </span>
+
+            </div>
+
+
+            <div class="setting">
+
+                <label>
+                    Detail
+                </label>
+
+                <input
+                    type="range"
+                    id="detail"
+                    min="0"
+                    max="10"
+                    value="5"
+                >
+
+                <span id="detailValue">
+                    5
+                </span>
+
+            </div>
+
+
+            <button id="vectorButton">
+                ✨ Create Vector
+            </button>
+
+        </section>
+
+
+        <!-- Preview -->
+
+        <section class="preview">
+
+            <div class="preview-card">
+
+                <h2>Original</h2>
+
+                <div class="image-container">
+                    <img id="originalImage">
+                </div>
+
+            </div>
+
+
+            <div class="preview-card">
+
+                <h2>Vector</h2>
+
+                <div
+                    class="image-container vector-container"
+                    id="vectorPreview"
+                >
+                    <p>
+                        Your vector will appear here
+                    </p>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- Download -->
+
+        <section class="download-box">
+
+            <h2>3. Download</h2>
+
+            <button
+                id="downloadSVG"
+                disabled
+            >
+                Download SVG
+            </button>
+
+
+            <button
+                id="downloadEPS"
+                disabled
+            >
+                Download EPS
+            </button>
+
+        </section>
+
+
+    </main>
+
+
+    <footer>
+
+        <p>
+            © 2026 Graceful Celestial
+        </p>
+
+    </footer>
+
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f7f4ef;
+    color: #222;
+}
+
+
+/* HEADER */
+
+header {
+    background: #111;
+    color: white;
+    padding: 25px;
+    text-align: center;
+}
+
+
+.logo {
+    font-size: 28px;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+
+header p {
+    margin-top: 6px;
+    color: #ccc;
+}
+
+
+/* MAIN */
+
+main {
+    max-width: 1100px;
+    margin: auto;
+    padding: 30px 20px;
+}
+
+
+/* HERO */
+
+.hero {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+
+.hero h1 {
+    font-size: 40px;
+    margin-bottom: 10px;
+}
+
+
+.hero p {
+    color: #666;
+}
+
+
+/* BOX */
+
+.upload-box,
+.settings,
+.download-box {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    margin-bottom: 25px;
+
+    box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+}
+
+
+h2 {
+    margin-bottom: 20px;
+}
+
+
+/* FILE INPUT */
+
+#imageInput {
+    display: none;
+}
+
+
+.upload-button {
+    display: inline-block;
+
+    background: #111;
+    color: white;
+
+    padding: 14px 25px;
+
+    border-radius: 8px;
+
+    cursor: pointer;
+}
+
+
+.upload-button:hover {
+    background: #333;
+}
+
+
+#fileName {
+    margin-top: 15px;
+    color: #777;
+}
+
+
+/* SETTINGS */
+
+.setting {
+    margin-bottom: 20px;
+}
+
+
+.setting label {
+    display: inline-block;
+    width: 100px;
+}
+
+
+.setting input {
+    width: 60%;
+}
+
+
+.setting span {
+    margin-left: 10px;
+    font-weight: bold;
+}
+
+
+button {
+    border: none;
+    border-radius: 8px;
+
+    padding: 13px 22px;
+
+    background: #111;
+    color: white;
+
+    cursor: pointer;
+
+    font-size: 15px;
+}
+
+
+button:hover {
+    background: #333;
+}
+
+
+button:disabled {
+    background: #aaa;
+    cursor: not-allowed;
+}
+
+
+/* PREVIEW */
+
+.preview {
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    gap: 20px;
+
+    margin-bottom: 25px;
+}
+
+
+.preview-card {
+    background: white;
+
+    padding: 20px;
+
+    border-radius: 15px;
+
+    box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+}
+
+
+.image-container {
+    width: 100%;
+
+    min-height: 350px;
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    background: #eee;
+
+    overflow: hidden;
+
+    border-radius: 10px;
+}
+
+
+.image-container img {
+    max-width: 100%;
+    max-height: 500px;
+}
+
+
+.vector-container {
+    background: white;
+}
+
+
+.vector-container svg {
+    width: 100%;
+    height: auto;
+}
+
+
+/* DOWNLOAD */
+
+.download-box button {
+    margin-right: 10px;
+}
+
+
+/* FOOTER */
+
+footer {
+    text-align: center;
+
+    padding: 30px;
+
+    color: #777;
+}
+
+
+/* MOBILE */
+
+@media (max-width: 700px) {
+
+    .preview {
+        grid-template-columns: 1fr;
+    }
+
+    .hero h1 {
+        font-size: 30px;
+    }
+
+    .setting input {
+        width: 50%;
+    }
+
+}
+const imageInput = document.getElementById("imageInput");
+
+const originalImage =
+    document.getElementById("originalImage");
+
+const fileName =
+    document.getElementById("fileName");
+
+const vectorButton =
+    document.getElementById("vectorButton");
+
+const vectorPreview =
+    document.getElementById("vectorPreview");
+
+const downloadSVG =
+    document.getElementById("downloadSVG");
+
+const downloadEPS =
+    document.getElementById("downloadEPS");
+
+const threshold =
+    document.getElementById("threshold");
+
+const thresholdValue =
+    document.getElementById("thresholdValue");
+
+const detail =
+    document.getElementById("detail");
+
+const detailValue =
+    document.getElementById("detailValue");
+
+
+let selectedImage = null;
+
+let generatedSVG = null;
+
+
+/* =========================
+   THRESHOLD DISPLAY
+========================= */
+
+threshold.addEventListener("input", function () {
+
+    thresholdValue.textContent =
+        threshold.value;
+
+});
+
+
+/* =========================
+   DETAIL DISPLAY
+========================= */
+
+detail.addEventListener("input", function () {
+
+    detailValue.textContent =
+        detail.value;
+
+});
+
+
+/* =========================
+   IMAGE UPLOAD
+========================= */
+
+imageInput.addEventListener("change", function () {
+
+    const file = imageInput.files[0];
+
+    if (!file) {
+        return;
+    }
+
+    selectedImage = file;
+
+    fileName.textContent =
+        file.name;
+
+    const imageURL =
+        URL.createObjectURL(file);
+
+    originalImage.src =
+        imageURL;
+
+});
+
+
+/* =========================
+   CREATE VECTOR
+========================= */
+
+vectorButton.addEventListener("click", function () {
+
+    if (!selectedImage) {
+
+        alert("Please choose an image first.");
+
+        return;
+    }
+
+
+    vectorButton.disabled = true;
+
+    vectorButton.textContent =
+        "Creating Vector...";
+
+
+    const reader =
+        new FileReader();
+
+
+    reader.onload = function (event) {
+
+        const image =
+            new Image();
+
+
+        image.onload = function () {
+
+            createVector(image);
+
+        };
+
+
+        image.src =
+            event.target.result;
+
+    };
+
+
+    reader.readAsDataURL(selectedImage);
+
+});
+
+
+/* =========================
+   VECTOR PROCESSING
+========================= */
+
+function createVector(image) {
+
+    const canvas =
+        document.createElement("canvas");
+
+    const ctx =
+        canvas.getContext("2d");
+
+
+    let width =
+        image.width;
+
+    let height =
+        image.height;
+
+
+    /*
+       Make the image smaller
+       so the browser works faster.
+    */
+
+    const maxSize = 1500;
+
+
+    if (width > maxSize || height > maxSize) {
+
+        const scale =
+            Math.min(
+                maxSize / width,
+                maxSize / height
+            );
+
+        width =
+            Math.round(width * scale);
+
+        height =
+            Math.round(height * scale);
+
+    }
+
+
+    canvas.width =
+        width;
+
+    canvas.height =
+        height;
+
+
+    ctx.drawImage(
+        image,
+        0,
+        0,
+        width,
+        height
+    );
+
+
+    /*
+       Get image pixels
+    */
+
+    const imageData =
+        ctx.getImageData(
+            0,
+            0,
+            width,
+            height
+        );
+
+
+    const pixels =
+        imageData.data;
+
+
+    const thresholdNumber =
+        Number(threshold.value);
+
+
+    /*
+       Convert image to black & white
+    */
+
+    for (
+        let i = 0;
+        i < pixels.length;
+        i += 4
+    ) {
+
+        const r =
+            pixels[i];
+
+        const g =
+            pixels[i + 1];
+
+        const b =
+            pixels[i + 2];
+
+
+        /*
+           Grayscale
+        */
+
+        const gray =
+            0.299 * r +
+            0.587 * g +
+            0.114 * b;
+
+
+        /*
+           Black / White
+        */
+
+        const value =
+            gray < thresholdNumber
+                ? 0
+                : 255;
+
+
+        pixels[i] =
+            value;
+
+        pixels[i + 1] =
+            value;
+
+        pixels[i + 2] =
+            value;
+
+    }
+
+
+    ctx.putImageData(
+        imageData,
+        0,
+        0
+    );
+
+
+    /*
+       ImageTracer settings
+    */
+
+    const options = {
+
+        ltres: 1,
+        qtres: 1,
+
+        pathomit:
+            Math.max(
+                1,
+                10 - Number(detail.value)
+            ),
+
+        rightangleenhance: true,
+
+        colorsampling: 0,
+
+        numberofcolors: 2,
+
+        mincolorratio: 0,
+
+        colorquantcycles: 1,
+
+        strokewidth: 1,
+
+        linefilter: true,
+
+        roundcoords: 1,
+
+        blurradius: 0,
+
+        blurdelta: 20
+
+    };
+
+
+    /*
+       Convert canvas → Vector SVG
+    */
+
+    ImageTracer.imageToSVG(
+        canvas,
+        function (svgString) {
+
+            generatedSVG =
+                svgString;
+
+
+            /*
+               Show SVG
+            */
+
+            vectorPreview.innerHTML =
+                generatedSVG;
+
+
+            /*
+               Enable buttons
+            */
+
+            downloadSVG.disabled =
+                false;
+
+            downloadEPS.disabled =
+                false;
+
+
+            vectorButton.disabled =
+                false;
+
+            vectorButton.textContent =
+                "✨ Create Vector";
+
+        },
+        options
+    );
+
+}
+
+
+/* =========================
+   DOWNLOAD SVG
+========================= */
+
+downloadSVG.addEventListener(
+    "click",
+    function () {
+
+        if (!generatedSVG) {
+            return;
+        }
+
+
+        const blob =
+            new Blob(
+                [generatedSVG],
+                {
+                    type: "image/svg+xml"
+                }
+            );
+
+
+        const url =
+            URL.createObjectURL(blob);
+
+
+        const link =
+            document.createElement("a");
+
+
+        link.href =
+            url;
+
+        link.download =
+            "textile-vector.svg";
+
+
+        link.click();
+
+
+        URL.revokeObjectURL(url);
+
+    }
+);
+
+
+/* =========================
+   SVG → EPS
+========================= */
+
+downloadEPS.addEventListener(
+    "click",
+    function () {
+
+        if (!generatedSVG) {
+            return;
+        }
+
+
+        const eps =
+            svgToEPS(generatedSVG);
+
+
+        const blob =
+            new Blob(
+                [eps],
+                {
+                    type: "application/postscript"
+                }
+            );
+
+
+        const url =
+            URL.createObjectURL(blob);
+
+
+        const link =
+            document.createElement("a");
+
+
+        link.href =
+            url;
+
+        link.download =
+            "textile-vector.eps";
+
+
+        link.click();
+
+
+        URL.revokeObjectURL(url);
+
+    }
+);
+
+
+/* =========================
+   SVG PATH → EPS
+========================= */
+
+function svgToEPS(svg) {
+
+    const parser =
+        new DOMParser();
+
+
+    const doc =
+        parser.parseFromString(
+            svg,
+            "image/svg+xml"
+        );
+
+
+    const svgElement =
+        doc.querySelector("svg");
+
+
+    const width =
+        parseFloat(
+            svgElement.getAttribute("width")
+        ) || 1000;
+
+
+    const height =
+        parseFloat(
+            svgElement.getAttribute("height")
+        ) || 1000;
+
+
+    let eps = "";
+
+
+    eps +=
+        "%!PS-Adobe-3.0 EPSF-3.0\n";
+
+
+    eps +=
+        "%%BoundingBox: 0 0 "
+        + Math.ceil(width)
+        + " "
+        + Math.ceil(height)
+        + "\n";
+
+
+    eps +=
+        "%%Creator: Graceful Celestial Textile Vectorizer\n";
+
+
+    eps +=
+        "1 setlinejoin\n";
+
+
+    eps +=
+        "1 setlinecap\n";
+
+
+    const paths =
+        svgElement.querySelectorAll("path");
+
+
+    paths.forEach(function (path) {
+
+        const d =
+            path.getAttribute("d");
+
+
+        if (!d) {
+            return;
+        }
+
+
+        eps +=
+            "newpath\n";
+
+
+        const commands =
+            parseSVGPath(d);
+
+
+        commands.forEach(function (command) {
+
+            if (command.type === "M") {
+
+                eps +=
+                    command.x +
+                    " " +
+                    (height - command.y) +
+                    " moveto\n";
+
+            }
+
+
+            else if (command.type === "L") {
+
+                eps +=
+                    command.x +
+                    " " +
+                    (height - command.y) +
+                    " lineto\n";
+
+            }
+
+
+            else if (command.type === "C") {
+
+                eps +=
+                    command.x1 +
+                    " " +
+                    (height - command.y1) +
+                    " " +
+                    command.x2 +
+                    " " +
+                    (height - command.y2) +
+                    " " +
+                    command.x +
+                    " " +
+                    (height - command.y) +
+                    " curveto\n";
+
+            }
+
+
+            else if (command.type === "Z") {
+
+                eps +=
+                    "closepath\n";
+
+            }
+
+        });
+
+
+        /*
+           Fill black
+        */
+
+        eps +=
+            "0 0 0 setrgbcolor\n";
+
+
+        eps +=
+            "fill\n";
+
+    });
+
+
+    eps +=
+        "showpage\n";
+
+
+    eps +=
+        "%%EOF\n";
+
+
+    return eps;
+
+}
+
+
+/* =========================
+   SIMPLE SVG PATH PARSER
+========================= */
+
+function parseSVGPath(d) {
+
+    const tokens =
+        d.match(
+            /[a-zA-Z]|-?\d*\.?\d+/g
+        );
+
+
+    const result = [];
+
+    let i = 0;
+
+    let currentX = 0;
+
+    let currentY = 0;
+
+
+    while (i < tokens.length) {
+
+        const command =
+            tokens[i++];
+
+
+        if (command === "M") {
+
+            currentX =
+                Number(tokens[i++]);
+
+            currentY =
+                Number(tokens[i++]);
+
+
+            result.push({
+                type: "M",
+                x: currentX,
+                y: currentY
+            });
+
+        }
+
+
+        else if (command === "L") {
+
+            currentX =
+                Number(tokens[i++]);
+
+            currentY =
+                Number(tokens[i++]);
+
+
+            result.push({
+                type: "L",
+                x: currentX,
+                y: currentY
+            });
+
+        }
+
+
+        else if (command === "C") {
+
+            const x1 =
+                Number(tokens[i++]);
+
+            const y1 =
+                Number(tokens[i++]);
+
+            const x2 =
+                Number(tokens[i++]);
+
+            const y2 =
+                Number(tokens[i++]);
+
+            currentX =
+                Number(tokens[i++]);
+
+            currentY =
+                Number(tokens[i++]);
+
+
+            result.push({
+
+                type: "C",
+
+                x1: x1,
+                y1: y1,
+
+                x2: x2,
+                y2: y2,
+
+                x: currentX,
+                y: currentY
+
+            });
+
+        }
+
+
+        else if (command === "Z" ||
+                 command === "z") {
+
+            result.push({
+                type: "Z"
+            });
+
+        }
+
+
+        else {
+
+            /*
+               Skip unsupported commands
+            */
+
+            i++;
+
+        }
+
+    }
+
+
+    return result;
+
+}
+      

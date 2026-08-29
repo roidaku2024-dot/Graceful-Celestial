@@ -1,7 +1,11 @@
 const imageInput = document.getElementById("imageInput");
+const uploadZone = document.getElementById("uploadZone");
+
 const originalPreview = document.getElementById("originalPreview");
 const vectorPreview = document.getElementById("vectorPreview");
+
 const fileName = document.getElementById("fileName");
+const fileSize = document.getElementById("fileSize");
 
 const threshold = document.getElementById("threshold");
 const thresholdValue = document.getElementById("thresholdValue");
@@ -9,597 +13,506 @@ const thresholdValue = document.getElementById("thresholdValue");
 const detail = document.getElementById("detail");
 const detailValue = document.getElementById("detailValue");
 
-const vectorButton = document.getElementById("vectorButton");
+const invert = document.getElementById("invert");
 
-const downloadSVG = document.getElementById("downloadSVG");
-const downloadEPS = document.getElementById("downloadEPS");
+const vectorizeButton = document.getElementById("vectorizeButton");
+const resetButton = document.getElementById("resetButton");
 
+const downloadSvg = document.getElementById("downloadSvg");
+const downloadPng = document.getElementById("downloadPng");
 
-let selectedImage = null;
-let generatedSVG = null;
+const processingNote = document.getElementById("processingNote");
+const engineStatus = document.getElementById("engineStatus");
 
+const toast = document.getElementById("toast");
 
-/* =========================
-   SLIDERS
-========================= */
+let sourceImage = null;
+let sourceFileName = "vector-artwork";
+let svgOutput = "";
 
-threshold.addEventListener("input", function () {
-    thresholdValue.textContent = threshold.value;
+threshold.addEventListener("input", () => {
+  thresholdValue.textContent = threshold.value;
 });
 
-detail.addEventListener("input", function () {
-    detailValue.textContent = detail.value;
+detail.addEventListener("input", () => {
+  detailValue.textContent = detail.value;
 });
 
-
-/* =========================
-   UPLOAD IMAGE
-========================= */
-
-imageInput.addEventListener("change", function () {
-
-    const file = imageInput.files[0];
-
-    if (!file) return;
-
-    selectedImage = file;
-
-    fileName.textContent = file.name;
-
-    const url = URL.createObjectURL(file);
-
-    originalPreview.innerHTML = "";
-
-    const image = document.createElement("img");
-
-    image.src = url;
-
-    originalPreview.appendChild(image);
-
+uploadZone.addEventListener("click", () => {
+  imageInput.click();
 });
 
+uploadZone.addEventListener("keydown", (event) => {
+  if (event.key === "Enter" || event.key === " ") {
+    event.preventDefault();
+    imageInput.click();
+  }
+});
 
-/* =========================
-   CREATE VECTOR
-========================= */
+imageInput.addEventListener("change", () => {
+  if (!imageInput.files.length) return;
 
-vectorButton.addEventListener("click", function () {
+  loadFile(imageInput.files[0]);
+});
 
-    if (!selectedImage) {
-        alert("Please upload an image first.");
-        return;
-    }
+uploadZone.addEventListener("dragover", (event) => {
+  event.preventDefault();
+  uploadZone.classList.add("dragging");
+});
 
-    vectorButton.disabled = true;
-    vectorButton.textContent = "PROCESSING...";
+uploadZone.addEventListener("dragleave", () => {
+  uploadZone.classList.remove("dragging");
+});
 
-    const reader = new FileReader();
+uploadZone.addEventListener("drop", (event) => {
+  event.preventDefault();
 
-    reader.onload = function (event) {
+  uploadZone.classList.remove("dragging");
 
-        const image = new Image();
+  const files = event.dataTransfer.files;
 
-        image.onload = function () {
-            createVector(image);
-        };
+  if (!files.length) return;
 
-        image.onerror = function () {
-            alert("Image could not be loaded.");
-            resetVectorButton();
-        };
+  loadFile(files[0]);
+});
 
-        image.src = event.target.result;
+function loadFile(file) {
+  if (!file.type.startsWith("image/")) {
+    showToast("Please select an image file.");
+    return;
+  }
+
+  const maxSize = 15 * 1024 * 1024;
+
+  if (file.size > maxSize) {
+    showToast("Image is too large. Maximum 15 MB.");
+    return;
+  }
+
+  const reader = new FileReader();
+
+  reader.onload = function (event) {
+    const image = new Image();
+
+    image.onload = function () {
+      sourceImage = image;
+      sourceFileName = removeExtension(file.name);
+
+      originalPreview.innerHTML = "";
+
+      const previewImage = document.createElement("img");
+
+      previewImage.src = event.target.result;
+      previewImage.alt = "Original uploaded artwork";
+
+      originalPreview.appendChild(previewImage);
+
+      fileName.textContent = file.name;
+      fileSize.textContent = formatFileSize(file.size);
+
+      vectorizeButton.disabled = false;
+
+      clearVector();
+
+      showToast("Image loaded successfully.");
     };
 
-    reader.readAsDataURL(selectedImage);
+    image.onerror = function () {
+      showToast("Unable to load this image.");
+    };
 
-});
+    image.src = event.target.result;
+  };
 
+  reader.readAsDataURL(file);
+}
 
-/* =========================
-   STRONG TEXTILE VECTOR
-========================= */
+vectorizeButton.addEventListener("click", vectorizeImage);
 
-function createVector(image) {
+function vectorizeImage() {
+  if (!sourceImage) {
+    showToast("Please upload an image first.");
+    return;
+  }
 
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d", {
-        willReadFrequently: true
-    });
+  if (typeof ImageTracer === "undefined") {
+    showToast(
+      "Vector engine failed to load. Check your internet connection."
+    );
 
-    let width = image.naturalWidth;
-    let height = image.naturalHeight;
+    engineStatus.textContent = "ENGINE LOAD ERROR";
+    return;
+  }
 
-    const MAX_SIZE = 900;
+  vectorizeButton.disabled = true;
+  vectorizeButton.textContent = "PROCESSING...";
 
-    if (width > MAX_SIZE || height > MAX_SIZE) {
+  processingNote.textContent =
+    "Creating vector paths. Please wait...";
 
+  engineStatus.textContent = "PROCESSING";
+
+  setTimeout(() => {
+    try {
+      const canvas = document.createElement("canvas");
+
+      const ctx = canvas.getContext("2d", {
+        willReadFrequently: true,
+      });
+
+      const maxDimension = 1200;
+
+      let width = sourceImage.naturalWidth;
+      let height = sourceImage.naturalHeight;
+
+      if (width > maxDimension || height > maxDimension) {
         const scale = Math.min(
-            MAX_SIZE / width,
-            MAX_SIZE / height
+          maxDimension / width,
+          maxDimension / height
         );
 
         width = Math.round(width * scale);
         height = Math.round(height * scale);
-    }
+      }
 
-    canvas.width = width;
-    canvas.height = height;
+      canvas.width = width;
+      canvas.height = height;
 
-    ctx.drawImage(image, 0, 0, width, height);
+      ctx.drawImage(sourceImage, 0, 0, width, height);
 
-    const imageData = ctx.getImageData(
+      const imageData = ctx.getImageData(
         0,
         0,
         width,
         height
-    );
+      );
 
-    const pixels = imageData.data;
+      const data = imageData.data;
 
-    const thresholdNumber = Number(threshold.value);
+      const limit = Number(threshold.value);
+      const shouldInvert = invert.checked;
 
-
-    /*
-       Convert to strong
-       black and white
-    */
-
-    for (let i = 0; i < pixels.length; i += 4) {
-
-        const r = pixels[i];
-        const g = pixels[i + 1];
-        const b = pixels[i + 2];
+      for (let i = 0; i < data.length; i += 4) {
+        const red = data[i];
+        const green = data[i + 1];
+        const blue = data[i + 2];
 
         const gray =
-            (0.299 * r) +
-            (0.587 * g) +
-            (0.114 * b);
+          red * 0.299 +
+          green * 0.587 +
+          blue * 0.114;
 
-        const value =
-            gray < thresholdNumber
-                ? 0
-                : 255;
+        let value = gray >= limit ? 255 : 0;
 
-        pixels[i] = value;
-        pixels[i + 1] = value;
-        pixels[i + 2] = value;
-        pixels[i + 3] = 255;
-    }
+        if (shouldInvert) {
+          value = 255 - value;
+        }
 
-    ctx.putImageData(imageData, 0, 0);
+        data[i] = value;
+        data[i + 1] = value;
+        data[i + 2] = value;
+        data[i + 3] = 255;
+      }
 
+      const detailLevel = Number(detail.value);
 
-    if (typeof ImageTracer === "undefined") {
+      const traceTolerance = Math.max(
+        0.15,
+        2.2 - detailLevel * 0.18
+      );
 
-        alert(
-            "Vector engine did not load. Refresh the website and try again."
-        );
+      const omit = Math.max(
+        1,
+        12 - detailLevel
+      );
 
-        resetVectorButton();
-        return;
-    }
+      const options = {
+        numberofcolors: 2,
+        colorsampling: 0,
 
+        ltres: traceTolerance,
+        qtres: traceTolerance,
 
-    /*
-       STRONGER VECTOR SETTINGS
-    */
-
-    const detailValueNumber = Number(detail.value);
-
-    const options = {
-
-        ltres: Math.max(
-            0.5,
-            2 - detailValueNumber * 0.12
-        ),
-
-        qtres: Math.max(
-            0.5,
-            2 - detailValueNumber * 0.12
-        ),
-
-        pathomit: Math.max(
-            2,
-            16 - detailValueNumber
-        ),
+        pathomit: omit,
 
         rightangleenhance: true,
 
-        colorsampling: 0,
-
-        numberofcolors: 2,
-
-        mincolorratio: 0.01,
-
-        colorquantcycles: 1,
-
         strokewidth: 0,
-
         linefilter: true,
 
-        roundcoords: 2,
+        scale: 1,
+        viewbox: true,
 
-        blurradius: 1,
+        desc: false,
+      };
 
-        blurdelta: 20
-    };
+      svgOutput = ImageTracer.imagedataToSVG(
+        imageData,
+        options
+      );
 
+      vectorPreview.innerHTML = svgOutput;
 
-    setTimeout(function () {
+      const svg =
+        vectorPreview.querySelector("svg");
 
-        try {
+      if (svg) {
+        svg.setAttribute(
+          "preserveAspectRatio",
+          "xMidYMid meet"
+        );
+      }
 
-            generatedSVG =
-                ImageTracer.imagedataToSVG(
-                    imageData,
-                    options
-                );
+      downloadSvg.disabled = false;
+      downloadPng.disabled = false;
 
+      processingNote.textContent =
+        "Vector artwork created successfully.";
 
-            vectorPreview.innerHTML = generatedSVG;
+      engineStatus.textContent =
+        "VECTOR ENGINE READY";
 
+      showToast("Vector artwork created.");
+    } catch (error) {
+      console.error(error);
 
-            downloadSVG.disabled = false;
+      processingNote.textContent =
+        "Vector conversion failed.";
 
-            downloadEPS.disabled = false;
+      engineStatus.textContent =
+        "ENGINE ERROR";
 
+      showToast(
+        "Vector conversion failed. Try another image."
+      );
+    } finally {
+      vectorizeButton.disabled = false;
 
-            resetVectorButton();
-
-        }
-
-        catch (error) {
-
-            console.error(error);
-
-            alert(
-                "Vector failed. Try a lower Detail value such as 3 or 4."
-            );
-
-            resetVectorButton();
-        }
-
-    }, 100);
-
+      vectorizeButton.textContent =
+        "✦ CREATE VECTOR ARTWORK →";
+    }
+  }, 80);
 }
 
+downloadSvg.addEventListener("click", () => {
+  if (!svgOutput) return;
 
-function resetVectorButton() {
+  const blob = new Blob(
+    [svgOutput],
+    {
+      type: "image/svg+xml;charset=utf-8",
+    }
+  );
 
-    vectorButton.disabled = false;
+  downloadBlob(
+    blob,
+    sourceFileName + "-vector.svg"
+  );
 
-    vectorButton.textContent = "CREATE VECTOR";
-}
+  showToast("SVG downloaded.");
+});
 
+downloadPng.addEventListener("click", () => {
+  if (!svgOutput) return;
 
-/* =========================
-   DOWNLOAD FUNCTION
-========================= */
+  const svgBlob = new Blob(
+    [svgOutput],
+    {
+      type: "image/svg+xml;charset=utf-8",
+    }
+  );
 
-function downloadFile(content, fileName, type) {
+  const svgUrl =
+    URL.createObjectURL(svgBlob);
 
-    const blob = new Blob(
-        [content],
-        { type: type }
+  const image = new Image();
+
+  image.onload = function () {
+    const canvas =
+      document.createElement("canvas");
+
+    const scale = 2;
+
+    canvas.width = image.width * scale;
+    canvas.height = image.height * scale;
+
+    const ctx = canvas.getContext("2d");
+
+    ctx.fillStyle = "#ffffff";
+
+    ctx.fillRect(
+      0,
+      0,
+      canvas.width,
+      canvas.height
     );
 
-    const url =
-        URL.createObjectURL(blob);
+    ctx.drawImage(
+      image,
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
 
-    const link =
-        document.createElement("a");
+    canvas.toBlob(
+      function (blob) {
+        if (!blob) return;
 
-    link.href = url;
+        downloadBlob(
+          blob,
+          sourceFileName + "-vector.png"
+        );
 
-    link.download = fileName;
+        showToast("PNG downloaded.");
+      },
+      "image/png"
+    );
 
-    link.style.display = "none";
+    URL.revokeObjectURL(svgUrl);
+  };
 
-    document.body.appendChild(link);
+  image.onerror = function () {
+    URL.revokeObjectURL(svgUrl);
 
-    link.click();
+    showToast("PNG export failed.");
+  };
 
-    setTimeout(function () {
+  image.src = svgUrl;
+});
 
-        URL.revokeObjectURL(url);
+resetButton.addEventListener("click", resetApp);
 
-        link.remove();
+function resetApp() {
+  sourceImage = null;
+  svgOutput = "";
 
-    }, 500);
+  sourceFileName = "vector-artwork";
 
+  imageInput.value = "";
+
+  threshold.value = 128;
+  thresholdValue.textContent = "128";
+
+  detail.value = 5;
+  detailValue.textContent = "5";
+
+  invert.checked = false;
+
+  originalPreview.innerHTML = `
+    <div class="empty-state">
+      <div class="empty-icon">▧</div>
+
+      <p>
+        Upload an image to preview
+      </p>
+    </div>
+  `;
+
+  clearVector();
+
+  fileName.textContent =
+    "No image selected";
+
+  fileSize.textContent =
+    "🔒 Processed in your browser";
+
+  vectorizeButton.disabled = true;
+
+  processingNote.textContent =
+    "Recommended for Batik: Threshold 110–160 · Detail 4–7";
+
+  engineStatus.textContent =
+    "VECTOR ENGINE READY";
+
+  showToast("Workspace reset.");
 }
 
-
-/* =========================
-   DOWNLOAD SVG
-========================= */
-
-downloadSVG.addEventListener(
-    "click",
-    function () {
-
-        if (!generatedSVG) {
-            alert("Create a vector first.");
-            return;
-        }
-
-        downloadFile(
-            generatedSVG,
-            "textile-vector.svg",
-            "image/svg+xml;charset=utf-8"
-        );
-
-    }
-);
-
-
-/* =========================
-   DOWNLOAD EPS
-========================= */
-
-downloadEPS.addEventListener(
-    "click",
-    function () {
-
-        if (!generatedSVG) {
-            alert("Create a vector first.");
-            return;
-        }
-
-        const eps =
-            svgToEPS(generatedSVG);
-
-        downloadFile(
-            eps,
-            "textile-vector.eps",
-            "application/postscript"
-        );
-
-    }
-);
-
-
-/* =========================
-   SVG TO SIMPLE EPS
-========================= */
-
-function svgToEPS(svgString) {
-
-    const parser = new DOMParser();
-
-    const doc =
-        parser.parseFromString(
-            svgString,
-            "image/svg+xml"
-        );
-
-    const svg =
-        doc.querySelector("svg");
-
-    let width =
-        parseFloat(svg.getAttribute("width"));
-
-    let height =
-        parseFloat(svg.getAttribute("height"));
-
-
-    /*
-       ImageTracer may use
-       viewBox instead
-    */
-
-    if (!width || !height) {
-
-        const viewBox =
-            svg.getAttribute("viewBox");
-
-        if (viewBox) {
-
-            const parts =
-                viewBox
-                    .trim()
-                    .split(/\s+/);
-
-            width = Number(parts[2]);
-            height = Number(parts[3]);
-        }
-    }
-
-
-    width = width || 1000;
-    height = height || 1000;
-
-
-    let eps =
-        "%!PS-Adobe-3.0 EPSF-3.0\n";
-
-    eps +=
-        "%%Creator: Graceful Celestial Textile Vector Studio\n";
-
-    eps +=
-        "%%BoundingBox: 0 0 " +
-        Math.ceil(width) +
-        " " +
-        Math.ceil(height) +
-        "\n";
-
-    eps +=
-        "%%EndComments\n";
-
-
-    const paths =
-        svg.querySelectorAll("path");
-
-
-    paths.forEach(function (path) {
-
-        const d =
-            path.getAttribute("d");
-
-        if (!d) return;
-
-
-        eps += "newpath\n";
-
-        const commands =
-            parseSVGPath(d);
-
-
-        commands.forEach(function (cmd) {
-
-            if (cmd.type === "M") {
-
-                eps +=
-                    cmd.x +
-                    " " +
-                    (height - cmd.y) +
-                    " moveto\n";
-
-            }
-
-            else if (cmd.type === "L") {
-
-                eps +=
-                    cmd.x +
-                    " " +
-                    (height - cmd.y) +
-                    " lineto\n";
-
-            }
-
-            else if (cmd.type === "C") {
-
-                eps +=
-                    cmd.x1 +
-                    " " +
-                    (height - cmd.y1) +
-                    " " +
-
-                    cmd.x2 +
-                    " " +
-                    (height - cmd.y2) +
-                    " " +
-
-                    cmd.x +
-                    " " +
-                    (height - cmd.y) +
-                    " curveto\n";
-
-            }
-
-            else if (cmd.type === "Z") {
-
-                eps += "closepath\n";
-
-            }
-
-        });
-
-
-        eps +=
-            "0 0 0 setrgbcolor\n";
-
-        eps +=
-            "fill\n";
-
-    });
-
-
-    eps +=
-        "showpage\n";
-
-    eps +=
-        "%%EOF\n";
-
-
-    return eps;
+function clearVector() {
+  svgOutput = "";
+
+  vectorPreview.innerHTML = `
+    <div class="empty-state">
+      <div class="empty-icon">✦</div>
+
+      <p>
+        Your vector artwork
+        will appear here
+      </p>
+    </div>
+  `;
+
+  downloadSvg.disabled = true;
+  downloadPng.disabled = true;
 }
 
+function downloadBlob(blob, filename) {
+  const url =
+    URL.createObjectURL(blob);
 
-/* =========================
-   SVG PATH PARSER
-   Supports M L C Z
-========================= */
+  const link =
+    document.createElement("a");
 
-function parseSVGPath(d) {
+  link.href = url;
+  link.download = filename;
 
-    const tokens =
-        d.match(
-            /[MLCZmlcz]|-?\d*\.?\d+(?:e[-+]?\d+)?/g
-        );
+  document.body.appendChild(link);
 
-    if (!tokens) return [];
+  link.click();
+  link.remove();
 
-    const result = [];
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+  }, 1000);
+}
 
-    let i = 0;
+function removeExtension(filename) {
+  return filename.replace(
+    /\.[^/.]+$/,
+    ""
+  );
+}
 
-    let command = "";
+function formatFileSize(bytes) {
+  if (bytes < 1024) {
+    return bytes + " B";
+  }
 
-    let currentX = 0;
-    let currentY = 0;
+  if (bytes < 1024 * 1024) {
+    return (
+      (bytes / 1024).toFixed(1) +
+      " KB"
+    );
+  }
 
+  return (
+    (
+      bytes /
+      (1024 * 1024)
+    ).toFixed(1) +
+    " MB"
+  );
+}
 
-    while (i < tokens.length) {
+function showToast(message) {
+  toast.textContent = message;
 
-        if (/[MLCZmlcz]/.test(tokens[i])) {
-            command = tokens[i++];
-        }
+  toast.classList.add("show");
 
+  clearTimeout(showToast.timer);
 
-        if (command === "M") {
+  showToast.timer = setTimeout(() => {
+    toast.classList.remove("show");
+  }, 2500);
+}
 
-            currentX = Number(tokens[i++]);
-            currentY = Number(tokens[i++]);
+window.addEventListener("load", () => {
+  if (typeof ImageTracer === "undefined") {
+    engineStatus.textContent =
+      "ENGINE LOAD ERROR";
 
-            result.push({
-                type: "M",
-                x: currentX,
-                y: currentY
-            });
-
-            command = "L";
-        }
-
-
-        else if (command === "L") {
-
-            currentX = Number(tokens[i++]);
-            currentY = Number(tokens[i++]);
-
-            result.push({
-                type: "L",
-                x: currentX,
-                y: currentY
-            });
-        }
-
-
-        else if (command === "C") {
-
-            const x1 = Number(tokens[i++]);
-            const y1 = Number(tokens[i++]);
-
-            const x2 = Number(tokens[i++]);
-            const y2 = Number(tokens[i++]);
-
-            currentX = Number(tokens[i++]);
-            currentY = Number(tokens[i++]);
-
-            result.push({
-                type: "C",
-                x1: x1,
-                y1: y1,
-                x2: x2,
-                y2: y2,
-                x: currentX,
-                y: currentY
-            });
-        }
-
-
-        else if (
-            command === "Z" ||
-            command === "z"
-        ) {
+    showToast(
+      "Vector engine could not load. Check internet connection."
+    );
+  }
+});

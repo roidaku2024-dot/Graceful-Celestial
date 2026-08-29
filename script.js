@@ -1137,3 +1137,229 @@ function runSelectedTool() {
     runBatikVectorRedraw();
   }
 }
+/* ==========================================
+   ADVANCED WORKFLOW BUTTONS
+========================================== */
+
+const toolModes =
+    document.querySelectorAll(".tool-mode");
+
+const runSelectedTool =
+    document.getElementById("runSelectedTool");
+
+const downloadAIImage =
+    document.getElementById("downloadAIImage");
+
+
+let selectedTool = "bw";
+
+
+/* ------------------------------------------
+   SELECT TOOL
+------------------------------------------ */
+
+toolModes.forEach(function (button) {
+
+    button.addEventListener(
+        "click",
+        function () {
+
+            /* Remove active from all buttons */
+
+            toolModes.forEach(function (item) {
+
+                item.classList.remove("active");
+
+            });
+
+
+            /* Add active to clicked button */
+
+            button.classList.add("active");
+
+
+            /* Save selected tool */
+
+            selectedTool =
+                button.dataset.tool;
+
+
+            /* Show message */
+
+            if (selectedTool === "bw") {
+
+                showToast(
+                    "Classic Vector selected."
+                );
+
+            }
+
+            else if (selectedTool === "color") {
+
+                showToast(
+                    "Ultra Color Vector selected."
+                );
+
+            }
+
+            else if (selectedTool === "8k") {
+
+                showToast(
+                    "AI 8K Enhance selected."
+                );
+
+            }
+
+            else if (selectedTool === "batik") {
+
+                showToast(
+                    "Batik Vector Redraw selected."
+                );
+
+            }
+
+        }
+    );
+
+});
+
+
+/* ------------------------------------------
+   RUN SELECTED TOOL
+------------------------------------------ */
+
+runSelectedTool.addEventListener(
+    "click",
+    function () {
+
+        /* Check image first */
+
+        if (!sourceImage) {
+
+            showToast(
+                "Please upload an image first."
+            );
+
+            return;
+
+        }
+
+
+        /* CLASSIC VECTOR */
+
+        if (selectedTool === "bw") {
+
+            vectorizeImage();
+
+        }
+
+
+        /* ULTRA COLOR VECTOR */
+
+        else if (selectedTool === "color") {
+
+            if (
+                typeof createUltraColorVector ===
+                "function"
+            ) {
+
+                createUltraColorVector();
+
+            }
+
+            else {
+
+                showToast(
+                    "Ultra Color Vector is not ready yet."
+                );
+
+            }
+
+        }
+
+
+        /* AI 8K ENHANCE */
+
+        else if (selectedTool === "8k") {
+
+            if (
+                typeof run8KEnhance ===
+                "function"
+            ) {
+
+                run8KEnhance();
+
+            }
+
+            else {
+
+                showToast(
+                    "AI 8K Enhance is not ready yet."
+                );
+
+            }
+
+        }
+
+
+        /* BATIK VECTOR REDRAW */
+
+        else if (selectedTool === "batik") {
+
+            if (
+                typeof runBatikVectorRedraw ===
+                "function"
+            ) {
+
+                runBatikVectorRedraw();
+
+            }
+
+            else {
+
+                /*
+                   Temporary fallback:
+                   Use classic vector engine
+                */
+
+                processingNote.textContent =
+                    "Batik mode: creating clean vector artwork...";
+
+
+                vectorizeImage();
+
+            }
+
+        }
+
+    }
+);
+
+
+/* ------------------------------------------
+   DOWNLOAD AI IMAGE
+------------------------------------------ */
+
+downloadAIImage.addEventListener(
+    "click",
+    function () {
+
+        if (
+            typeof downloadAIEnhancedImage ===
+            "function"
+        ) {
+
+            downloadAIEnhancedImage();
+
+        }
+
+        else {
+
+            showToast(
+                "No AI enhanced image available."
+            );
+
+        }
+
+    }
+);

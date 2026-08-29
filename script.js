@@ -516,3 +516,624 @@ window.addEventListener("load", () => {
     );
   }
 });
+
+/* ==========================================
+   AI ENHANCEMENT HELPERS
+========================================== */
+
+async function enhanceImageWithAI(
+  imageDataUrl,
+  scale = 4,
+  faceEnhance = false
+) {
+  try {
+    showToast(
+      "AI enhancement started..."
+    );
+
+    engineStatus.textContent =
+      "AI PROCESSING";
+
+    const response =
+      await fetch(
+        "/api/enhance",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body: JSON.stringify({
+            image: imageDataUrl,
+            scale: scale,
+            faceEnhance:
+              faceEnhance
+          })
+        }
+      );
+
+    const result =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        result.error ||
+        "AI enhancement failed"
+      );
+    }
+
+    engineStatus.textContent =
+      "VECTOR ENGINE READY";
+
+    showToast(
+      "AI enhancement complete."
+    );
+
+    return result.output;
+
+  } catch (error) {
+    console.error(error);
+
+    engineStatus.textContent =
+      "AI ERROR";
+
+    showToast(
+      error.message
+    );
+
+    throw error;
+  }
+}
+
+
+/* ==========================================
+   SOURCE IMAGE → DATA URL
+========================================== */
+
+function getSourceImageDataUrl() {
+  if (!sourceImage) {
+    return null;
+  }
+
+  const canvas =
+    document.createElement(
+      "canvas"
+    );
+
+  canvas.width =
+    sourceImage.naturalWidth;
+
+  canvas.height =
+    sourceImage.naturalHeight;
+
+  const ctx =
+    canvas.getContext("2d");
+
+  ctx.drawImage(
+    sourceImage,
+    0,
+    0
+  );
+
+  return canvas.toDataURL(
+    "image/png",
+    0.95
+  );
+}
+
+
+/* ==========================================
+   8K SCALE CALCULATOR
+========================================== */
+
+function calculateUpscaleFactor(
+  width,
+  height
+) {
+  const targetWidth = 7680;
+  const targetHeight = 4320;
+
+  const widthScale =
+    targetWidth / width;
+
+  const heightScale =
+    targetHeight / height;
+
+  let scale =
+    Math.max(
+      widthScale,
+      heightScale
+    );
+
+  scale =
+    Math.ceil(scale);
+
+  scale =
+    Math.max(
+      2,
+      scale
+    );
+
+  scale =
+    Math.min(
+      10,
+      scale
+    );
+
+  return scale;
+}
+
+
+/* ==========================================
+   AI 8K ENHANCE
+========================================== */
+
+async function run8KEnhance() {
+  if (!sourceImage) {
+    showToast(
+      "Please upload an image first."
+    );
+
+    return;
+  }
+
+  try {
+    processingNote.textContent =
+      "AI is enhancing and restoring your image...";
+
+    const scale =
+      calculateUpscaleFactor(
+        sourceImage.naturalWidth,
+        sourceImage.naturalHeight
+      );
+
+    const imageDataUrl =
+      getSourceImageDataUrl();
+
+    const enhancedUrl =
+      await enhanceImageWithAI(
+        imageDataUrl,
+        scale,
+        false
+      );
+
+    vectorPreview.innerHTML =
+      "";
+
+    const enhancedImage =
+      document.createElement(
+        "img"
+      );
+
+    enhancedImage.src =
+      enhancedUrl;
+
+    enhancedImage.alt =
+      "AI Enhanced Image";
+
+    vectorPreview.appendChild(
+      enhancedImage
+    );
+
+    window.aiEnhancedImageUrl =
+      enhancedUrl;
+
+    processingNote.textContent =
+      "AI enhanced image ready.";
+
+    showToast(
+      "AI 8K enhancement finished."
+    );
+
+  } catch (error) {
+    processingNote.textContent =
+      "AI enhancement failed.";
+  }
+}
+
+
+/* ==========================================
+   DOWNLOAD AI IMAGE
+========================================== */
+
+async function downloadAIEnhancedImage() {
+  if (
+    !window.aiEnhancedImageUrl
+  ) {
+    showToast(
+      "No AI enhanced image yet."
+    );
+
+    return;
+  }
+
+  try {
+    const response =
+      await fetch(
+        window.aiEnhancedImageUrl
+      );
+
+    const blob =
+      await response.blob();
+
+    downloadBlob(
+      blob,
+      sourceFileName +
+      "-AI-enhanced.png"
+    );
+
+    showToast(
+      "Enhanced image downloaded."
+    );
+
+  } catch (error) {
+    console.error(error);
+
+    showToast(
+      "Download failed."
+    );
+  }
+}
+
+
+/* ==========================================
+   ULTRA COLOR VECTOR
+========================================== */
+
+function createUltraColorVector(
+  colorCount = 16
+) {
+  if (!sourceImage) {
+    showToast(
+      "Please upload an image first."
+    );
+
+    return;
+  }
+
+  if (
+    typeof ImageTracer ===
+    "undefined"
+  ) {
+    showToast(
+      "Vector engine not loaded."
+    );
+
+    return;
+  }
+
+  try {
+    engineStatus.textContent =
+      "COLOR VECTOR PROCESSING";
+
+    processingNote.textContent =
+      "Creating ultra color vector...";
+
+    const canvas =
+      document.createElement(
+        "canvas"
+      );
+
+    const maxDimension =
+      1600;
+
+    let width =
+      sourceImage.naturalWidth;
+
+    let height =
+      sourceImage.naturalHeight;
+
+    if (
+      width > maxDimension ||
+      height > maxDimension
+    ) {
+      const scale =
+        Math.min(
+          maxDimension / width,
+          maxDimension / height
+        );
+
+      width =
+        Math.round(
+          width * scale
+        );
+
+      height =
+        Math.round(
+          height * scale
+        );
+    }
+
+    canvas.width = width;
+    canvas.height = height;
+
+    const ctx =
+      canvas.getContext(
+        "2d",
+        {
+          willReadFrequently:
+            true
+        }
+      );
+
+    ctx.drawImage(
+      sourceImage,
+      0,
+      0,
+      width,
+      height
+    );
+
+    const imageData =
+      ctx.getImageData(
+        0,
+        0,
+        width,
+        height
+      );
+
+    const options = {
+      numberofcolors:
+        colorCount,
+
+      colorsampling:
+        2,
+
+      colorquantcycles:
+        3,
+
+      ltres:
+        1,
+
+      qtres:
+        1,
+
+      pathomit:
+        4,
+
+      rightangleenhance:
+        true,
+
+      strokewidth:
+        0,
+
+      linefilter:
+        false,
+
+      scale:
+        1,
+
+      viewbox:
+        true,
+
+      desc:
+        false
+    };
+
+    svgOutput =
+      ImageTracer.imagedataToSVG(
+        imageData,
+        options
+      );
+
+    vectorPreview.innerHTML =
+      svgOutput;
+
+    downloadSvg.disabled =
+      false;
+
+    downloadPng.disabled =
+      false;
+
+    engineStatus.textContent =
+      "VECTOR ENGINE READY";
+
+    processingNote.textContent =
+      `${colorCount}-color vector created.`;
+
+    showToast(
+      "Ultra Color Vector created."
+    );
+
+  } catch (error) {
+    console.error(error);
+
+    engineStatus.textContent =
+      "VECTOR ERROR";
+
+    showToast(
+      "Color vector conversion failed."
+    );
+  }
+}
+
+
+/* ==========================================
+   BATIK AI VECTOR REDRAW
+========================================== */
+
+async function runBatikVectorRedraw() {
+  if (!sourceImage) {
+    showToast(
+      "Please upload Batik artwork first."
+    );
+
+    return;
+  }
+
+  try {
+    engineStatus.textContent =
+      "BATIK AI PROCESSING";
+
+    processingNote.textContent =
+      "Cleaning Batik artwork with AI...";
+
+    const imageDataUrl =
+      getSourceImageDataUrl();
+
+    const enhancedUrl =
+      await enhanceImageWithAI(
+        imageDataUrl,
+        2,
+        false
+      );
+
+    const enhancedImage =
+      new Image();
+
+    enhancedImage.crossOrigin =
+      "anonymous";
+
+    enhancedImage.onload =
+      function () {
+        sourceImage =
+          enhancedImage;
+
+        processingNote.textContent =
+          "AI cleanup complete. Creating Batik vector...";
+
+        vectorizeImage();
+      };
+
+    enhancedImage.onerror =
+      function () {
+        showToast(
+          "Unable to load AI enhanced Batik."
+        );
+      };
+
+    enhancedImage.src =
+      enhancedUrl;
+
+  } catch (error) {
+    console.error(error);
+
+    engineStatus.textContent =
+      "BATIK AI ERROR";
+
+    processingNote.textContent =
+      "Batik redraw failed.";
+
+    showToast(
+      "Batik redraw failed."
+    );
+  }
+}
+
+
+/* ==========================================
+   TOOL MODE SELECTOR
+========================================== */
+
+const toolButtons =
+  document.querySelectorAll(
+    ".tool-mode"
+  );
+
+let currentTool = "bw";
+
+toolButtons.forEach(
+  (button) => {
+    button.addEventListener(
+      "click",
+      () => {
+        toolButtons.forEach(
+          (item) => {
+            item.classList.remove(
+              "active"
+            );
+          }
+        );
+
+        button.classList.add(
+          "active"
+        );
+
+        currentTool =
+          button.dataset.tool;
+
+        changeToolMode(
+          currentTool
+        );
+      }
+    );
+  }
+);
+
+
+function changeToolMode(mode) {
+  if (mode === "bw") {
+    processingNote.textContent =
+      "Classic Vector Mode selected.";
+
+    showToast(
+      "Classic Vector selected."
+    );
+  }
+
+  else if (
+    mode === "color"
+  ) {
+    processingNote.textContent =
+      "Ultra Color Vector Mode selected.";
+
+    showToast(
+      "Ultra Color Vector selected."
+    );
+  }
+
+  else if (
+    mode === "8k"
+  ) {
+    processingNote.textContent =
+      "AI 8K Photo Enhance Mode selected.";
+
+    showToast(
+      "AI 8K Enhance selected."
+    );
+  }
+
+  else if (
+    mode === "batik"
+  ) {
+    processingNote.textContent =
+      "Batik Vector Redraw Mode selected.";
+
+    showToast(
+      "Batik Vector Redraw selected."
+    );
+  }
+}
+
+
+/* ==========================================
+   RUN SELECTED TOOL
+========================================== */
+
+function runSelectedTool() {
+  if (currentTool === "bw") {
+    vectorizeImage();
+  }
+
+  else if (
+    currentTool === "color"
+  ) {
+    createUltraColorVector(
+      16
+    );
+  }
+
+  else if (
+    currentTool === "8k"
+  ) {
+    run8KEnhance();
+  }
+
+  else if (
+    currentTool === "batik"
+  ) {
+    runBatikVectorRedraw();
+  }
+}

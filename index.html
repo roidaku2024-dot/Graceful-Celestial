@@ -2,77 +2,501 @@
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Graceful Celestial - Textile Vectorizer</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    <link rel="stylesheet" href="style.css">
+    <meta
+        name="description"
+        content="Professional textile and batik photo to vector converter."
+    >
 
-    <!-- ImageTracer -->
+    <title>
+        Graceful Celestial | Textile Vector Studio
+    </title>
+
+
+    <!-- Main CSS -->
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
+
+    <!-- ImageTracer Vector Engine -->
+
     <script src="https://cdn.jsdelivr.net/npm/imagetracerjs@1.2.6/imagetracer_v1.2.6.js"></script>
+
 </head>
+
 
 <body>
 
-    <header>
-        <div class="logo">
-            Graceful Celestial
+
+<!-- =========================
+     HEADER
+========================= -->
+
+<header class="site-header">
+
+    <div class="header-container">
+
+
+        <!-- LOGO / BRAND -->
+
+        <a
+            href="#"
+            class="brand"
+        >
+
+            <div class="brand-mark">
+                GC
+            </div>
+
+
+            <div class="brand-text">
+
+                <span class="brand-name">
+                    GRACEFUL CELESTIAL
+                </span>
+
+                <span class="brand-subtitle">
+                    TEXTILE VECTOR STUDIO
+                </span>
+
+            </div>
+
+        </a>
+
+
+        <!-- STATUS -->
+
+        <div class="header-status">
+
+            <span class="status-dot"></span>
+
+            VECTOR ENGINE READY
+
         </div>
 
-        <p>Textile & Batik Vectorizer</p>
-    </header>
+
+    </div>
+
+</header>
 
 
-    <main>
 
-        <section class="hero">
+<!-- =========================
+     MAIN
+========================= -->
 
-            <h1>
-                Photo to Textile Vector
-            </h1>
+<main class="app">
+
+
+
+    <!-- =====================
+         HERO
+    ====================== -->
+
+    <section class="hero-section">
+
+        <div class="hero-label">
+
+            PROFESSIONAL TEXTILE TOOL
+
+        </div>
+
+
+        <h1>
+
+            Transform Textile Photos
+            <span>Into Vector Artwork.</span>
+
+        </h1>
+
+
+        <p>
+
+            Upload your Batik, textile or pattern image.
+            Create strong black and white vector artwork
+            and export your design as SVG or EPS.
+
+        </p>
+
+
+        <div class="hero-features">
+
+            <span>⚡ Fast Processing</span>
+
+            <span>✦ Clean Vector Paths</span>
+
+            <span>⬇ SVG Export</span>
+
+            <span>⬇ EPS Export</span>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================
+         UPLOAD SECTION
+    ====================== -->
+
+    <section class="tool-section">
+
+        <div class="section-heading">
+
+            <div>
+
+                <span class="section-number">
+                    01
+                </span>
+
+                <h2>
+                    Upload Artwork
+                </h2>
+
+            </div>
+
 
             <p>
-                Turn your Batik and Textile photos into clean vector artwork.
+                Start by selecting a textile or Batik image.
             </p>
 
-        </section>
+        </div>
 
 
-        <!-- Upload -->
+        <label
+            for="imageInput"
+            class="upload-zone"
+        >
 
-        <section class="upload-box">
+            <div class="upload-icon">
 
-            <h2>1. Upload your image</h2>
+                ↑
 
-            <label for="imageInput" class="upload-button">
-                📷 Choose Image
-            </label>
+            </div>
 
-            <input
-                type="file"
-                id="imageInput"
-                accept="image/png,image/jpeg,image/jpg"
-            >
 
-            <p id="fileName">
-                No image selected
+            <h3>
+
+                Drop your image here
+
+            </h3>
+
+
+            <p>
+
+                or click to browse your device
+
             </p>
 
-        </section>
+
+            <span class="file-types">
+
+                JPG · JPEG · PNG
+
+            </span>
+
+        </label>
 
 
-        <!-- Settings -->
+        <!-- IMPORTANT -->
 
-        <section class="settings">
+        <input
+            type="file"
+            id="imageInput"
+            accept="image/png,image/jpeg,image/jpg"
+        >
 
-            <h2>2. Vector Settings</h2>
 
-            <div class="setting">
+        <div class="upload-info">
 
-                <label>
-                    Threshold
-                </label>
+            <div>
+
+                <span class="info-label">
+                    SELECTED FILE
+                </span>
+
+
+                <strong id="fileName">
+
+                    No image selected
+
+                </strong>
+
+            </div>
+
+
+            <span class="privacy-text">
+
+                🔒 Processed in your browser
+
+            </span>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================
+         WORKSPACE
+    ====================== -->
+
+    <section class="workspace-section">
+
+
+        <div class="workspace-header">
+
+            <div>
+
+                <span class="section-number">
+                    02
+                </span>
+
+
+                <h2>
+                    Vector Workspace
+                </h2>
+
+            </div>
+
+
+            <div class="workspace-status">
+
+                <span></span>
+
+                READY
+
+            </div>
+
+        </div>
+
+
+
+        <!-- PREVIEW GRID -->
+
+        <div class="preview-grid">
+
+
+            <!-- ORIGINAL -->
+
+            <div class="preview-panel">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <span class="panel-label">
+
+                            INPUT
+
+                        </span>
+
+
+                        <h3>
+
+                            Original Image
+
+                        </h3>
+
+                    </div>
+
+
+                    <span class="panel-badge">
+
+                        SOURCE
+
+                    </span>
+
+                </div>
+
+
+                <div
+                    id="originalPreview"
+                    class="preview-area"
+                >
+
+                    <div class="empty-preview">
+
+                        <div>
+
+                            📷
+
+                        </div>
+
+
+                        <p>
+
+                            Upload an image to preview
+
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- VECTOR -->
+
+            <div class="preview-panel vector-panel">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <span class="panel-label">
+
+                            OUTPUT
+
+                        </span>
+
+
+                        <h3>
+
+                            Vector Artwork
+
+                        </h3>
+
+                    </div>
+
+
+                    <span class="panel-badge vector-badge">
+
+                        SVG
+
+                    </span>
+
+                </div>
+
+
+                <div
+                    id="vectorPreview"
+                    class="preview-area vector-preview"
+                >
+
+                    <div class="empty-preview">
+
+                        <div>
+
+                            ✦
+
+                        </div>
+
+
+                        <p>
+
+                            Your vector artwork will appear here
+
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================
+         VECTOR SETTINGS
+    ====================== -->
+
+    <section class="settings-section">
+
+
+        <div class="settings-header">
+
+            <div>
+
+                <span class="section-number">
+                    03
+                </span>
+
+
+                <h2>
+                    Vector Controls
+                </h2>
+
+            </div>
+
+
+            <p>
+
+                Adjust the settings for stronger
+                or more detailed vector artwork.
+
+            </p>
+
+        </div>
+
+
+
+        <div class="controls-grid">
+
+
+            <!-- THRESHOLD -->
+
+            <div class="control-card">
+
+                <div class="control-header">
+
+                    <div>
+
+                        <span class="control-icon">
+
+                            ◐
+
+                        </span>
+
+
+                        <div>
+
+                            <h3>
+
+                                Threshold
+
+                            </h3>
+
+
+                            <p>
+
+                                Control black and white contrast.
+
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <strong
+                        id="thresholdValue"
+                        class="control-value"
+                    >
+
+                        128
+
+                    </strong>
+
+                </div>
+
 
                 <input
                     type="range"
@@ -82,111 +506,352 @@
                     value="128"
                 >
 
-                <span id="thresholdValue">
-                    128
-                </span>
-
             </div>
 
 
-            <div class="setting">
 
-                <label>
-                    Detail
-                </label>
+            <!-- DETAIL -->
+
+            <div class="control-card">
+
+                <div class="control-header">
+
+                    <div>
+
+                        <span class="control-icon">
+
+                            ✦
+
+                        </span>
+
+
+                        <div>
+
+                            <h3>
+
+                                Detail
+
+                            </h3>
+
+
+                            <p>
+
+                                Control vector path complexity.
+
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <strong
+                        id="detailValue"
+                        class="control-value"
+                    >
+
+                        5
+
+                    </strong>
+
+                </div>
+
 
                 <input
                     type="range"
                     id="detail"
-                    min="0"
+                    min="1"
                     max="10"
                     value="5"
                 >
 
-                <span id="detailValue">
-                    5
-                </span>
-
             </div>
 
 
-            <button id="vectorButton">
-                ✨ Create Vector
-            </button>
-
-        </section>
+        </div>
 
 
-        <!-- Preview -->
 
-        <section class="preview">
+        <!-- CREATE BUTTON -->
 
-            <div class="preview-card">
+        <button
+            id="vectorButton"
+            class="create-button"
+        >
 
-                <h2>Original</h2>
+            <span class="button-icon">
 
-                <div class="image-container">
-                    <img id="originalImage">
-                </div>
+                ✦
 
-            </div>
+            </span>
 
+            CREATE VECTOR ARTWORK
 
-            <div class="preview-card">
+            <span class="button-arrow">
 
-                <h2>Vector</h2>
+                →
 
-                <div
-                    class="image-container vector-container"
-                    id="vectorPreview"
-                >
-                    <p>
-                        Your vector will appear here
-                    </p>
-                </div>
+            </span>
 
-            </div>
-
-        </section>
+        </button>
 
 
-        <!-- Download -->
+        <p class="processing-note">
 
-        <section class="download-box">
+            Recommended for Batik:
+            Threshold 120–160 · Detail 4–6
 
-            <h2>3. Download</h2>
-
-            <button
-                id="downloadSVG"
-                disabled
-            >
-                Download SVG
-            </button>
-
-
-            <button
-                id="downloadEPS"
-                disabled
-            >
-                Download EPS
-            </button>
-
-        </section>
-
-
-    </main>
-
-
-    <footer>
-
-        <p>
-            © 2026 Graceful Celestial
         </p>
 
-    </footer>
+
+    </section>
 
 
-    <script src="script.js"></script>
+
+    <!-- =====================
+         EXPORT
+    ====================== -->
+
+    <section class="export-section">
+
+
+        <div class="export-header">
+
+            <div>
+
+                <span class="section-number">
+                    04
+                </span>
+
+
+                <h2>
+                    Export Artwork
+                </h2>
+
+            </div>
+
+
+            <p>
+
+                Download your completed vector design.
+
+            </p>
+
+        </div>
+
+
+
+        <div class="export-grid">
+
+
+            <!-- SVG -->
+
+            <div class="export-card">
+
+                <div class="export-file-icon">
+
+                    SVG
+
+                </div>
+
+
+                <div class="export-info">
+
+                    <h3>
+
+                        Scalable Vector Graphics
+
+                    </h3>
+
+
+                    <p>
+
+                        Best for Illustrator,
+                        web and digital design.
+
+                    </p>
+
+                </div>
+
+
+                <button
+                    id="downloadSVG"
+                    class="export-button"
+                    disabled
+                >
+
+                    DOWNLOAD SVG
+
+                </button>
+
+            </div>
+
+
+
+            <!-- EPS -->
+
+            <div class="export-card">
+
+                <div class="export-file-icon eps-icon">
+
+                    EPS
+
+                </div>
+
+
+                <div class="export-info">
+
+                    <h3>
+
+                        Encapsulated PostScript
+
+                    </h3>
+
+
+                    <p>
+
+                        Vector format for
+                        professional design workflows.
+
+                    </p>
+
+                </div>
+
+
+                <button
+                    id="downloadEPS"
+                    class="export-button"
+                    disabled
+                >
+
+                    DOWNLOAD EPS
+
+                </button>
+
+            </div>
+
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================
+         PROCESS FLOW
+    ====================== -->
+
+    <section class="process-section">
+
+        <h2>
+            HOW IT WORKS
+        </h2>
+
+
+        <div class="process-flow">
+
+            <div>
+
+                <span>01</span>
+
+                <strong>
+                    UPLOAD
+                </strong>
+
+            </div>
+
+
+            <i>→</i>
+
+
+            <div>
+
+                <span>02</span>
+
+                <strong>
+                    PROCESS
+                </strong>
+
+            </div>
+
+
+            <i>→</i>
+
+
+            <div>
+
+                <span>03</span>
+
+                <strong>
+                    VECTORIZE
+                </strong>
+
+            </div>
+
+
+            <i>→</i>
+
+
+            <div>
+
+                <span>04</span>
+
+                <strong>
+                    EXPORT
+                </strong>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+</main>
+
+
+
+<!-- =========================
+     FOOTER
+========================= -->
+
+<footer class="site-footer">
+
+    <div class="footer-container">
+
+        <div>
+
+            <strong>
+                GRACEFUL CELESTIAL
+            </strong>
+
+
+            <span>
+                Textile Vector Studio
+            </span>
+
+        </div>
+
+
+        <p>
+
+            © 2026 Graceful Celestial.
+            Professional Textile Vector Tools.
+
+        </p>
+
+    </div>
+
+</footer>
+
+
+
+<!-- =========================
+     JAVASCRIPT
+========================= -->
+
+<script src="script.js"></script>
+
 
 </body>
 

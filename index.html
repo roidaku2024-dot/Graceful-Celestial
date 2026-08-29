@@ -1032,7 +1032,67 @@
                 </span>
 
             </div>
+<!-- ADVANCED WORKFLOW -->
+<div class="advanced-tools">
 
+    <p class="tools-label">CHOOSE YOUR WORKFLOW</p>
+
+    <div class="tool-buttons">
+
+        <button class="tool-mode active" data-tool="bw" type="button">
+            <span class="tool-icon">◆</span>
+            <span class="tool-content">
+                <strong>Classic Vector</strong>
+                <small>Black & White Tracing</small>
+            </span>
+        </button>
+
+        <button class="tool-mode" data-tool="color" type="button">
+            <span class="tool-icon">🎨</span>
+            <span class="tool-content">
+                <strong>Ultra Color Vector</strong>
+                <small>Photo → Color Vector</small>
+            </span>
+        </button>
+
+        <button class="tool-mode" data-tool="8k" type="button">
+            <span class="tool-icon">✨</span>
+            <span class="tool-content">
+                <strong>AI 8K Enhance</strong>
+                <small>Upscale & Restore</small>
+            </span>
+        </button>
+
+        <button class="tool-mode" data-tool="batik" type="button">
+            <span class="tool-icon">✒</span>
+            <span class="tool-content">
+                <strong>Batik Vector Redraw</strong>
+                <small>AI Clean + Vectorize</small>
+            </span>
+        </button>
+
+    </div>
+
+    <div class="workflow-actions">
+        <button
+            class="primary-button"
+            id="runSelectedTool"
+            type="button"
+        >
+            RUN SELECTED TOOL →
+        </button>
+
+        <button
+            class="secondary-button"
+            id="downloadAIImage"
+            type="button"
+            disabled
+        >
+            DOWNLOAD AI ENHANCED IMAGE
+        </button>
+    </div>
+
+</div>
         </div>
 
     </section>
@@ -2850,98 +2910,3 @@
 
 </body>
 </html>
-
-<div class="advanced-tools">
-
-  <p class="tools-label">
-    CHOOSE YOUR WORKFLOW
-  </p>
-
-  <div class="tool-buttons">
-
-    <button
-      class="tool-mode active"
-      data-tool="bw"
-    >
-      <span class="tool-icon">◆</span>
-
-      <span class="tool-content">
-        <strong>
-          Classic Vector
-        </strong>
-
-        <small>
-          Black & White tracing
-        </small>
-      </span>
-    </button>
-
-
-    <button
-      class="tool-mode"
-      data-tool="color"
-    >
-      <span class="tool-icon">🎨</span>
-
-      <span class="tool-content">
-        <strong>
-          Ultra Color Vector
-        </strong>
-
-        <small>
-          Photo → Color Vector
-        </small>
-      </span>
-    </button>
-
-
-    <button
-      class="tool-mode"
-      data-tool="8k"
-    >
-      <span class="tool-icon">✨</span>
-
-      <span class="tool-content">
-        <strong>
-          AI 8K Enhance
-        </strong>
-
-        <small>
-          Upscale & Restore
-        </small>
-      </span>
-    </button>
-
-
-    <button
-      class="tool-mode"
-      data-tool="batik"
-    >
-      <span class="tool-icon">✒</span>
-
-      <span class="tool-content">
-        <strong>
-          Batik Vector Redraw
-        </strong>
-
-        <small>
-          AI Clean + Vectorize
-        </small>
-      </span>
-    </button>
-
-  </div>
-
-</div>
-<button
-  class="primary-button"
-  onclick="runSelectedTool()"
->
-  RUN SELECTED TOOL →
-</button>
-<button
-  class="download-button"
-  onclick="downloadAIEnhancedImage()"
->
-  DOWNLOAD AI ENHANCED IMAGE
-</button>

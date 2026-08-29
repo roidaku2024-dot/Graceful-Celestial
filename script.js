@@ -140,50 +140,54 @@ vectorButton.addEventListener("click", function () {
 
 function createVector(image) {
 
-    const canvas =
-        document.createElement("canvas");
+    const canvas = document.createElement("canvas");
 
-    const ctx =
-        canvas.getContext("2d");
+    const ctx = canvas.getContext("2d");
 
 
-    let width =
-        image.width;
+    let width = image.naturalWidth;
 
-    let height =
-        image.height;
+    let height = image.naturalHeight;
 
 
     /*
-       Make the image smaller
-       so the browser works faster.
+    IMPORTANT!
+
+    Textile images can be very large.
+
+    We make a smaller working image
+    so vector tracing is faster.
     */
 
-    const maxSize = 1500;
+    const MAX_SIZE = 700;
 
 
-    if (width > maxSize || height > maxSize) {
+    if (
+        width > MAX_SIZE ||
+        height > MAX_SIZE
+    ) {
 
-        const scale =
-            Math.min(
-                maxSize / width,
-                maxSize / height
-            );
+        const scale = Math.min(
+            MAX_SIZE / width,
+            MAX_SIZE / height
+        );
 
-        width =
-            Math.round(width * scale);
 
-        height =
-            Math.round(height * scale);
+        width = Math.round(
+            width * scale
+        );
+
+
+        height = Math.round(
+            height * scale
+        );
 
     }
 
 
-    canvas.width =
-        width;
+    canvas.width = width;
 
-    canvas.height =
-        height;
+    canvas.height = height;
 
 
     ctx.drawImage(
@@ -196,20 +200,18 @@ function createVector(image) {
 
 
     /*
-       Get image pixels
+    Get pixels from image
     */
 
-    const imageData =
-        ctx.getImageData(
-            0,
-            0,
-            width,
-            height
-        );
+    const imageData = ctx.getImageData(
+        0,
+        0,
+        width,
+        height
+    );
 
 
-    const pixels =
-        imageData.data;
+    const pixels = imageData.data;
 
 
     const thresholdNumber =
@@ -217,7 +219,8 @@ function createVector(image) {
 
 
     /*
-       Convert image to black & white
+    Convert image into
+    Black and White
     */
 
     for (
@@ -226,29 +229,18 @@ function createVector(image) {
         i += 4
     ) {
 
-        const r =
-            pixels[i];
+        const r = pixels[i];
 
-        const g =
-            pixels[i + 1];
+        const g = pixels[i + 1];
 
-        const b =
-            pixels[i + 2];
+        const b = pixels[i + 2];
 
-
-        /*
-           Grayscale
-        */
 
         const gray =
-            0.299 * r +
-            0.587 * g +
-            0.114 * b;
+            (r * 0.299) +
+            (g * 0.587) +
+            (b * 0.114);
 
-
-        /*
-           Black / White
-        */
 
         const value =
             gray < thresholdNumber
@@ -256,14 +248,13 @@ function createVector(image) {
                 : 255;
 
 
-        pixels[i] =
-            value;
+        pixels[i] = value;
 
-        pixels[i + 1] =
-            value;
+        pixels[i + 1] = value;
 
-        pixels[i + 2] =
-            value;
+        pixels[i + 2] = value;
+
+        pixels[i + 3] = 255;
 
     }
 
@@ -276,37 +267,67 @@ function createVector(image) {
 
 
     /*
-       ImageTracer settings
+    Check ImageTracer
+    */
+
+    if (
+        typeof ImageTracer ===
+        "undefined"
+    ) {
+
+        alert(
+            "Vector engine did not load. Please refresh the page."
+        );
+
+
+        vectorButton.disabled = false;
+
+        vectorButton.textContent =
+            "CREATE VECTOR";
+
+        return;
+
+    }
+
+
+    /*
+    Vector options
+
+    Faster settings for textile patterns
     */
 
     const options = {
 
-        ltres: 1,
-        qtres: 1,
+        ltres: 1.5,
+
+        qtres: 1.5,
 
         pathomit:
             Math.max(
-                1,
-                10 - Number(detail.value)
+                8,
+                25 -
+                (
+                    Number(detail.value) * 2
+                )
             ),
 
-        rightangleenhance: true,
+        rightangleenhance: false,
 
         colorsampling: 0,
 
         numberofcolors: 2,
 
-        mincolorratio: 0,
+        mincolorratio: 0.02,
 
         colorquantcycles: 1,
 
-        strokewidth: 1,
+        strokewidth: 0,
 
         linefilter: true,
 
         roundcoords: 1,
 
-        blurradius: 0,
+        blurradius: 1,
 
         blurdelta: 20
 
@@ -314,144 +335,77 @@ function createVector(image) {
 
 
     /*
-       Convert canvas → Vector SVG
+    Let browser update
+    "PROCESSING..." first
     */
 
-    ImageTracer.imageToSVG(
-        canvas,
-        function (svgString) {
+    setTimeout(function () {
 
-            generatedSVG =
-                svgString;
-
+        try {
 
             /*
-               Show SVG
+            Convert ImageData
+            directly to SVG
             */
+
+            const svg =
+                ImageTracer.imagedataToSVG(
+                    imageData,
+                    options
+                );
+
+
+            generatedSVG = svg;
+
 
             vectorPreview.innerHTML =
-                generatedSVG;
+                svg;
 
-
-            /*
-               Enable buttons
-            */
 
             downloadSVG.disabled =
                 false;
 
-            downloadEPS.disabled =
-                false;
+
+            if (downloadEPS) {
+
+                downloadEPS.disabled =
+                    false;
+
+            }
 
 
             vectorButton.disabled =
                 false;
 
-            vectorButton.textContent =
-                "✨ Create Vector";
 
-        },
-        options
-    );
+            vectorButton.textContent =
+                "CREATE VECTOR";
+
+
+        }
+
+        catch (error) {
+
+            console.error(error);
+
+
+            alert(
+                "Vector processing failed. Please try Detail 3 or 4."
+            );
+
+
+            vectorButton.disabled =
+                false;
+
+
+            vectorButton.textContent =
+                "CREATE VECTOR";
+
+        }
+
+    }, 100);
 
 }
-
-
-/* =========================
-   DOWNLOAD SVG
-========================= */
-
-downloadSVG.addEventListener(
-    "click",
-    function () {
-
-        if (!generatedSVG) {
-            return;
-        }
-
-
-        const blob =
-            new Blob(
-                [generatedSVG],
-                {
-                    type: "image/svg+xml"
-                }
-            );
-
-
-        const url =
-            URL.createObjectURL(blob);
-
-
-        const link =
-            document.createElement("a");
-
-
-        link.href =
-            url;
-
-        link.download =
-            "textile-vector.svg";
-
-
-        link.click();
-
-
-        URL.revokeObjectURL(url);
-
-    }
-);
-
-
-/* =========================
-   SVG → EPS
-========================= */
-
-downloadEPS.addEventListener(
-    "click",
-    function () {
-
-        if (!generatedSVG) {
-            return;
-        }
-
-
-        const eps =
-            svgToEPS(generatedSVG);
-
-
-        const blob =
-            new Blob(
-                [eps],
-                {
-                    type: "application/postscript"
-                }
-            );
-
-
-        const url =
-            URL.createObjectURL(blob);
-
-
-        const link =
-            document.createElement("a");
-
-
-        link.href =
-            url;
-
-        link.download =
-            "textile-vector.eps";
-
-
-        link.click();
-
-
-        URL.revokeObjectURL(url);
-
-    }
-);
-
 
 /* =========================
    SVG PATH → EPS

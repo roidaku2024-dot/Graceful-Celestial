@@ -1,1780 +1,733 @@
-<script>
+/* ==========================================
+   PROFESSIONAL BATIK VECTORIZE
+========================================== */
 
-    /* ==========================================
-       ELEMENTS
-    ========================================== */
+function vectorizeImage() {
 
-    const imageInput =
-        document.getElementById("imageInput");
+    if (!sourceImage) {
+        showToast(
+            "Please upload an image first."
+        );
+        return;
+    }
 
-    const uploadZone =
-        document.getElementById("uploadZone");
+    if (
+        typeof ImageTracer ===
+        "undefined"
+    ) {
+        showToast(
+            "Vector engine failed to load."
+        );
 
-    const originalPreview =
-        document.getElementById("originalPreview");
+        engineStatus.textContent =
+            "ENGINE LOAD ERROR";
 
-    const vectorPreview =
-        document.getElementById("vectorPreview");
-
-    const fileName =
-        document.getElementById("fileName");
-
-    const fileSize =
-        document.getElementById("fileSize");
-
-    const threshold =
-        document.getElementById("threshold");
-
-    const thresholdValue =
-        document.getElementById("thresholdValue");
-
-    const detail =
-        document.getElementById("detail");
-
-    const detailValue =
-        document.getElementById("detailValue");
-
-    const invert =
-        document.getElementById("invert");
-
-    const vectorizeButton =
-        document.getElementById("vectorizeButton");
-
-    const resetButton =
-        document.getElementById("resetButton");
-
-    const downloadSvg =
-        document.getElementById("downloadSvg");
-
-    const downloadPng =
-        document.getElementById("downloadPng");
-
-    const processingNote =
-        document.getElementById("processingNote");
-
-    const engineStatus =
-        document.getElementById("engineStatus");
-
-    const toast =
-        document.getElementById("toast");
+        return;
+    }
 
 
-    /* ==========================================
-       ADVANCED TOOL ELEMENTS
-    ========================================== */
+    vectorizeButton.disabled = true;
 
-    const toolModes =
-        document.querySelectorAll(".tool-mode");
+    vectorizeButton.textContent =
+        "PROCESSING...";
 
-    const runSelectedTool =
-        document.getElementById("runSelectedTool");
+    processingNote.textContent =
+        "Cleaning and tracing Batik artwork...";
 
-    const downloadAIImage =
-        document.getElementById("downloadAIImage");
+    engineStatus.textContent =
+        "PROCESSING";
 
 
-    /* ==========================================
-       VARIABLES
-    ========================================== */
+    setTimeout(() => {
 
-    let sourceImage = null;
+        try {
 
-    let sourceFile = null;
+            const canvas =
+                document.createElement(
+                    "canvas"
+                );
 
-    let sourceFileName = "vector-artwork";
-
-    let svgOutput = "";
-
-    let selectedTool = "bw";
-
-    let aiImageOutput = "";
-
-
-
-    /* ==========================================
-       SLIDERS
-    ========================================== */
-
-    threshold.addEventListener(
-        "input",
-        function () {
-
-            thresholdValue.textContent =
-                threshold.value;
-
-        }
-    );
-
-
-    detail.addEventListener(
-        "input",
-        function () {
-
-            detailValue.textContent =
-                detail.value;
-
-        }
-    );
-
-
-
-    /* ==========================================
-       TOOL MODE SELECTION
-    ========================================== */
-
-    toolModes.forEach(
-        function (button) {
-
-            button.addEventListener(
-                "click",
-                function () {
-
-                    toolModes.forEach(
-                        function (item) {
-
-                            item.classList.remove(
-                                "active"
-                            );
-
-                        }
-                    );
-
-
-                    button.classList.add(
-                        "active"
-                    );
-
-
-                    selectedTool =
-                        button.dataset.tool;
-
-
-                    let toolName =
-                        "Classic Vector";
-
-
-                    if (
-                        selectedTool === "color"
-                    ) {
-
-                        toolName =
-                            "Ultra Color Vector";
-
+            const ctx =
+                canvas.getContext(
+                    "2d",
+                    {
+                        willReadFrequently:
+                            true
                     }
+                );
 
 
-                    if (
-                        selectedTool === "8k"
-                    ) {
+            /*
+               Higher resolution tracing.
+               Better for Batik details.
+            */
 
-                        toolName =
-                            "AI 8K Enhance";
-
-                    }
-
-
-                    if (
-                        selectedTool === "batik"
-                    ) {
-
-                        toolName =
-                            "Batik Vector Redraw";
-
-                    }
+            const detailLevel =
+                Number(
+                    detail.value
+                );
 
 
-                    showToast(
-                        toolName +
-                        " selected."
-                    );
-
-                }
-            );
-
-        }
-    );
+            const maxDimension =
+                detailLevel >= 8
+                    ? 2200
+                    : 1800;
 
 
+            let width =
+                sourceImage.naturalWidth;
 
-    /* ==========================================
-       UPLOAD CLICK
-    ========================================== */
+            let height =
+                sourceImage.naturalHeight;
 
-    uploadZone.addEventListener(
-        "click",
-        function () {
-
-            imageInput.click();
-
-        }
-    );
-
-
-    uploadZone.addEventListener(
-        "keydown",
-        function (event) {
 
             if (
-                event.key === "Enter" ||
-                event.key === " "
+                width > maxDimension ||
+                height > maxDimension
             ) {
 
-                event.preventDefault();
-
-                imageInput.click();
-
-            }
-
-        }
-    );
+                const scale =
+                    Math.min(
+                        maxDimension / width,
+                        maxDimension / height
+                    );
 
 
-    imageInput.addEventListener(
-        "change",
-        function () {
+                width =
+                    Math.round(
+                        width * scale
+                    );
 
-            if (!imageInput.files.length) {
-
-                return;
-
-            }
-
-
-            loadFile(
-                imageInput.files[0]
-            );
-
-        }
-    );
-
-
-
-    /* ==========================================
-       DRAG AND DROP
-    ========================================== */
-
-    uploadZone.addEventListener(
-        "dragover",
-        function (event) {
-
-            event.preventDefault();
-
-            uploadZone.classList.add(
-                "dragging"
-            );
-
-        }
-    );
-
-
-    uploadZone.addEventListener(
-        "dragleave",
-        function () {
-
-            uploadZone.classList.remove(
-                "dragging"
-            );
-
-        }
-    );
-
-
-    uploadZone.addEventListener(
-        "drop",
-        function (event) {
-
-            event.preventDefault();
-
-            uploadZone.classList.remove(
-                "dragging"
-            );
-
-
-            const files =
-                event.dataTransfer.files;
-
-
-            if (!files.length) {
-
-                return;
+                height =
+                    Math.round(
+                        height * scale
+                    );
 
             }
 
 
-            loadFile(
-                files[0]
+            canvas.width =
+                width;
+
+            canvas.height =
+                height;
+
+
+            /*
+               High-quality resize
+            */
+
+            ctx.imageSmoothingEnabled =
+                true;
+
+            ctx.imageSmoothingQuality =
+                "high";
+
+
+            ctx.drawImage(
+                sourceImage,
+                0,
+                0,
+                width,
+                height
             );
 
-        }
-    );
+
+            let imageData =
+                ctx.getImageData(
+                    0,
+                    0,
+                    width,
+                    height
+                );
 
 
+            /*
+               STEP 1
+               Convert to smooth grayscale
+            */
 
-    /* ==========================================
-       LOAD IMAGE
-    ========================================== */
-
-    function loadFile(file) {
-
-        if (
-            !file.type.startsWith(
-                "image/"
-            )
-        ) {
-
-            showToast(
-                "Please select an image file."
-            );
-
-            return;
-
-        }
+            imageData =
+                createSmoothMonochrome(
+                    imageData,
+                    Number(
+                        threshold.value
+                    ),
+                    detailLevel,
+                    invert.checked
+                );
 
 
-        const maxSize =
-            15 * 1024 * 1024;
+            /*
+               STEP 2
+               Remove tiny isolated pixels
+            */
+
+            imageData =
+                cleanBinaryNoise(
+                    imageData,
+                    width,
+                    height,
+                    detailLevel
+                );
 
 
-        if (
-            file.size > maxSize
-        ) {
+            /*
+               STEP 3
+               Smooth vector tracing
+            */
 
-            showToast(
-                "Image is too large. Maximum 15 MB."
-            );
-
-            return;
-
-        }
+            const traceTolerance =
+                getTraceTolerance(
+                    detailLevel
+                );
 
 
-        sourceFile =
-            file;
+            const pathOmit =
+                detailLevel >= 8
+                    ? 1
+                    : detailLevel >= 6
+                        ? 2
+                        : 3;
 
 
-        const reader =
-            new FileReader();
+            const options = {
 
+                numberofcolors:
+                    2,
 
-        reader.onload =
-            function (event) {
+                colorsampling:
+                    0,
 
-                const image =
-                    new Image();
+                colorquantcycles:
+                    1,
 
+                ltres:
+                    traceTolerance,
 
-                image.onload =
-                    function () {
+                qtres:
+                    traceTolerance,
 
-                        sourceImage =
-                            image;
+                pathomit:
+                    pathOmit,
 
+                /*
+                   Important:
+                   false = less forced
+                   square/angular corners
+                */
 
-                        sourceFileName =
-                            removeExtension(
-                                file.name
-                            );
+                rightangleenhance:
+                    false,
 
+                linefilter:
+                    false,
 
-                        originalPreview.innerHTML =
-                            "";
+                strokewidth:
+                    0,
 
+                scale:
+                    1,
 
-                        const previewImage =
-                            document.createElement(
-                                "img"
-                            );
+                viewbox:
+                    true,
 
-
-                        previewImage.src =
-                            event.target.result;
-
-
-                        previewImage.alt =
-                            "Original uploaded artwork";
-
-
-                        originalPreview.appendChild(
-                            previewImage
-                        );
-
-
-                        fileName.textContent =
-                            file.name;
-
-
-                        fileSize.textContent =
-                            formatFileSize(
-                                file.size
-                            );
-
-
-                        vectorizeButton.disabled =
-                            false;
-
-
-                        clearVector();
-
-
-                        clearAIOutput();
-
-
-                        showToast(
-                            "Image loaded successfully."
-                        );
-
-                    };
-
-
-                image.onerror =
-                    function () {
-
-                        showToast(
-                            "Unable to load this image."
-                        );
-
-                    };
-
-
-                image.src =
-                    event.target.result;
+                desc:
+                    false
 
             };
 
 
-        reader.readAsDataURL(
-            file
-        );
-
-    }
-
-
-
-    /* ==========================================
-       RUN SELECTED TOOL
-    ========================================== */
-
-    runSelectedTool.addEventListener(
-        "click",
-        function () {
-
-            if (!sourceImage) {
-
-                showToast(
-                    "Please upload an image first."
-                );
-
-                return;
-
-            }
-
-
-            if (
-                selectedTool === "bw"
-            ) {
-
-                vectorizeImage();
-
-                return;
-
-            }
-
-
-            if (
-                selectedTool === "color"
-            ) {
-
-                runColorVector();
-
-                return;
-
-            }
-
-
-            if (
-                selectedTool === "8k"
-            ) {
-
-                run8KEnhance();
-
-                return;
-
-            }
-
-
-            if (
-                selectedTool === "batik"
-            ) {
-
-                runBatikVector();
-
-                return;
-
-            }
-
-        }
-    );
-
-
-
-    /* ==========================================
-       ① ULTRA COLOR VECTOR API
-    ========================================== */
-
-    async function runColorVector() {
-
-        if (!sourceFile) {
-
-            showToast(
-                "Please upload an image first."
-            );
-
-            return;
-
-        }
-
-
-        runSelectedTool.disabled =
-            true;
-
-
-        runSelectedTool.textContent =
-            "PROCESSING...";
-
-
-        processingNote.textContent =
-            "Ultra Color Vector processing...";
-
-
-        /*
-        ==========================================
-        ① PUT YOUR COLOR VECTOR API CODE HERE
-
-        Example:
-
-        const formData = new FormData();
-
-        formData.append(
-            "image",
-            sourceFile
-        );
-
-        const response =
-            await fetch(
-                "YOUR_COLOR_API_URL",
-                {
-                    method: "POST",
-                    headers: {
-                        Authorization:
-                            "Bearer YOUR_API_KEY"
-                    },
-                    body: formData
-                }
-            );
-
-        const result =
-            await response.json();
-
-        aiImageOutput =
-            result.imageUrl;
-
-        ==========================================
-        */
-
-
-        try {
-
-            showToast(
-                "Color Vector API is ready to connect."
-            );
-
-        }
-
-        catch (error) {
-
-            console.error(
-                error
-            );
-
-
-            showToast(
-                "Color Vector failed."
-            );
-
-        }
-
-        finally {
-
-            runSelectedTool.disabled =
-                false;
-
-
-            runSelectedTool.textContent =
-                "RUN SELECTED TOOL →";
-
-        }
-
-    }
-
-
-
-    /* ==========================================
-       ② AI 8K ENHANCE API
-    ========================================== */
-
-    async function run8KEnhance() {
-
-        if (!sourceFile) {
-
-            showToast(
-                "Please upload an image first."
-            );
-
-            return;
-
-        }
-
-
-        runSelectedTool.disabled =
-            true;
-
-
-        runSelectedTool.textContent =
-            "PROCESSING...";
-
-
-        processingNote.textContent =
-            "AI 8K Enhance processing...";
-
-
-        /*
-        ==========================================
-        ② PUT YOUR 8K API CODE HERE
-
-        const formData = new FormData();
-
-        formData.append(
-            "image",
-            sourceFile
-        );
-
-        const response =
-            await fetch(
-                "YOUR_8K_API_URL",
-                {
-                    method: "POST",
-                    headers: {
-                        Authorization:
-                            "Bearer YOUR_API_KEY"
-                    },
-                    body: formData
-                }
-            );
-
-        const result =
-            await response.json();
-
-        aiImageOutput =
-            result.imageUrl;
-
-
-        downloadAIImage.disabled =
-            false;
-
-        ==========================================
-        */
-
-
-        try {
-
-            showToast(
-                "AI 8K API is ready to connect."
-            );
-
-        }
-
-        catch (error) {
-
-            console.error(
-                error
-            );
-
-
-            showToast(
-                "AI 8K Enhance failed."
-            );
-
-        }
-
-        finally {
-
-            runSelectedTool.disabled =
-                false;
-
-
-            runSelectedTool.textContent =
-                "RUN SELECTED TOOL →";
-
-        }
-
-    }
-
-
-
-    /* ==========================================
-       ③ BATIK VECTOR API
-    ========================================== */
-
-    async function runBatikVector() {
-
-        if (!sourceFile) {
-
-            showToast(
-                "Please upload an image first."
-            );
-
-            return;
-
-        }
-
-
-        runSelectedTool.disabled =
-            true;
-
-
-        runSelectedTool.textContent =
-            "PROCESSING...";
-
-
-        processingNote.textContent =
-            "Batik Vector Redraw processing...";
-
-
-        /*
-        ==========================================
-        ③ PUT YOUR BATIK API CODE HERE
-
-        const formData = new FormData();
-
-        formData.append(
-            "image",
-            sourceFile
-        );
-
-        const response =
-            await fetch(
-                "YOUR_BATIK_API_URL",
-                {
-                    method: "POST",
-                    headers: {
-                        Authorization:
-                            "Bearer YOUR_API_KEY"
-                    },
-                    body: formData
-                }
-            );
-
-        const result =
-            await response.json();
-
-        aiImageOutput =
-            result.imageUrl;
-
-
-        downloadAIImage.disabled =
-            false;
-
-        ==========================================
-        */
-
-
-        try {
-
-            showToast(
-                "Batik API is ready to connect."
-            );
-
-        }
-
-        catch (error) {
-
-            console.error(
-                error
-            );
-
-
-            showToast(
-                "Batik Vector failed."
-            );
-
-        }
-
-        finally {
-
-            runSelectedTool.disabled =
-                false;
-
-
-            runSelectedTool.textContent =
-                "RUN SELECTED TOOL →";
-
-        }
-
-    }
-
-
-
-    /* ==========================================
-       DOWNLOAD AI IMAGE
-    ========================================== */
-
-    downloadAIImage.addEventListener(
-        "click",
-        function () {
-
-            if (!aiImageOutput) {
-
-                showToast(
-                    "No AI image available."
-                );
-
-                return;
-
-            }
-
-
-            const link =
-                document.createElement(
-                    "a"
+            svgOutput =
+                ImageTracer.imagedataToSVG(
+                    imageData,
+                    options
                 );
 
 
-            link.href =
-                aiImageOutput;
+            vectorPreview.innerHTML =
+                svgOutput;
 
 
-            link.download =
-                sourceFileName +
-                "-ai-result.png";
+            const svg =
+                vectorPreview.querySelector(
+                    "svg"
+                );
 
 
-            document.body.appendChild(
-                link
-            );
+            if (svg) {
+
+                svg.setAttribute(
+                    "preserveAspectRatio",
+                    "xMidYMid meet"
+                );
+
+                svg.style.width =
+                    "100%";
+
+                svg.style.height =
+                    "100%";
+
+            }
 
 
-            link.click();
+            downloadSvg.disabled =
+                false;
+
+            downloadPng.disabled =
+                false;
 
 
-            link.remove();
-
-
-            showToast(
-                "Downloading AI image..."
-            );
-
-        }
-    );
-
-
-
-    /* ==========================================
-       VECTORIZE
-    ========================================== */
-
-    vectorizeButton.addEventListener(
-        "click",
-        vectorizeImage
-    );
-
-
-    function vectorizeImage() {
-
-        if (!sourceImage) {
-
-            showToast(
-                "Please upload an image first."
-            );
-
-            return;
-
-        }
-
-
-        if (
-            typeof ImageTracer ===
-            "undefined"
-        ) {
-
-            showToast(
-                "Vector engine failed to load."
-            );
+            processingNote.textContent =
+                "Clean Batik vector created successfully.";
 
 
             engineStatus.textContent =
-                "ENGINE LOAD ERROR";
-
-
-            return;
-
-        }
-
-
-        vectorizeButton.disabled =
-            true;
-
-
-        vectorizeButton.textContent =
-            "PROCESSING...";
-
-
-        processingNote.textContent =
-            "Creating vector paths. Please wait...";
-
-
-        engineStatus.textContent =
-            "PROCESSING";
-
-
-        setTimeout(
-            function () {
-
-                try {
-
-                    const canvas =
-                        document.createElement(
-                            "canvas"
-                        );
-
-
-                    const ctx =
-                        canvas.getContext(
-                            "2d",
-                            {
-                                willReadFrequently:
-                                    true
-                            }
-                        );
-
-
-                    const maxDimension =
-                        1200;
-
-
-                    let width =
-                        sourceImage.naturalWidth;
-
-
-                    let height =
-                        sourceImage.naturalHeight;
-
-
-                    if (
-                        width > maxDimension ||
-                        height > maxDimension
-                    ) {
-
-                        const scale =
-                            Math.min(
-                                maxDimension / width,
-                                maxDimension / height
-                            );
-
-
-                        width =
-                            Math.round(
-                                width * scale
-                            );
-
-
-                        height =
-                            Math.round(
-                                height * scale
-                            );
-
-                    }
-
-
-                    canvas.width =
-                        width;
-
-
-                    canvas.height =
-                        height;
-
-
-                    ctx.drawImage(
-                        sourceImage,
-                        0,
-                        0,
-                        width,
-                        height
-                    );
-
-
-                    const imageData =
-                        ctx.getImageData(
-                            0,
-                            0,
-                            width,
-                            height
-                        );
-
-
-                    const data =
-                        imageData.data;
-
-
-                    const limit =
-                        Number(
-                            threshold.value
-                        );
-
-
-                    const shouldInvert =
-                        invert.checked;
-
-
-                    for (
-                        let i = 0;
-                        i < data.length;
-                        i += 4
-                    ) {
-
-                        const red =
-                            data[i];
-
-
-                        const green =
-                            data[i + 1];
-
-
-                        const blue =
-                            data[i + 2];
-
-
-                        const gray =
-                            (
-                                red * 0.299
-                            ) +
-                            (
-                                green * 0.587
-                            ) +
-                            (
-                                blue * 0.114
-                            );
-
-
-                        let value =
-                            gray >= limit
-                                ? 255
-                                : 0;
-
-
-                        if (
-                            shouldInvert
-                        ) {
-
-                            value =
-                                255 - value;
-
-                        }
-
-
-                        data[i] =
-                            value;
-
-
-                        data[i + 1] =
-                            value;
-
-
-                        data[i + 2] =
-                            value;
-
-
-                        data[i + 3] =
-                            255;
-
-                    }
-
-
-                    const detailLevel =
-                        Number(
-                            detail.value
-                        );
-
-
-                    const traceTolerance =
-                        Math.max(
-                            0.15,
-                            2.2 -
-                            (
-                                detailLevel *
-                                0.18
-                            )
-                        );
-
-
-                    const omit =
-                        Math.max(
-                            1,
-                            12 -
-                            detailLevel
-                        );
-
-
-                    const options = {
-
-                        numberofcolors:
-                            2,
-
-                        colorsampling:
-                            0,
-
-                        ltres:
-                            traceTolerance,
-
-                        qtres:
-                            traceTolerance,
-
-                        pathomit:
-                            omit,
-
-                        rightangleenhance:
-                            true,
-
-                        strokewidth:
-                            0,
-
-                        linefilter:
-                            true,
-
-                        scale:
-                            1,
-
-                        viewbox:
-                            true,
-
-                        desc:
-                            false
-
-                    };
-
-
-                    svgOutput =
-                        ImageTracer.imagedataToSVG(
-                            imageData,
-                            options
-                        );
-
-
-                    vectorPreview.innerHTML =
-                        svgOutput;
-
-
-                    const svg =
-                        vectorPreview.querySelector(
-                            "svg"
-                        );
-
-
-                    if (svg) {
-
-                        svg.setAttribute(
-                            "preserveAspectRatio",
-                            "xMidYMid meet"
-                        );
-
-                    }
-
-
-                    downloadSvg.disabled =
-                        false;
-
-
-                    downloadPng.disabled =
-                        false;
-
-
-                    processingNote.textContent =
-                        "Vector artwork created successfully.";
-
-
-                    engineStatus.textContent =
-                        "VECTOR ENGINE READY";
-
-
-                    showToast(
-                        "Vector artwork created."
-                    );
-
-                }
-
-                catch (error) {
-
-                    console.error(
-                        error
-                    );
-
-
-                    processingNote.textContent =
-                        "Vector conversion failed.";
-
-
-                    engineStatus.textContent =
-                        "ENGINE ERROR";
-
-
-                    showToast(
-                        "Vector conversion failed."
-                    );
-
-                }
-
-                finally {
-
-                    vectorizeButton.disabled =
-                        false;
-
-
-                    vectorizeButton.textContent =
-                        "✦ CREATE VECTOR ARTWORK →";
-
-                }
-
-            },
-            80
-        );
-
-    }
-
-
-
-    /* ==========================================
-       DOWNLOAD SVG
-    ========================================== */
-
-    downloadSvg.addEventListener(
-        "click",
-        function () {
-
-            if (!svgOutput) {
-
-                return;
-
-            }
-
-
-            const blob =
-                new Blob(
-                    [svgOutput],
-                    {
-                        type:
-                            "image/svg+xml;charset=utf-8"
-                    }
-                );
-
-
-            downloadBlob(
-                blob,
-                sourceFileName +
-                "-vector.svg"
-            );
+                "VECTOR ENGINE READY";
 
 
             showToast(
-                "SVG downloaded."
+                "Smooth Batik vector created."
             );
 
         }
-    );
+
+        catch (error) {
+
+            console.error(
+                error
+            );
 
 
-
-    /* ==========================================
-       DOWNLOAD PNG
-    ========================================== */
-
-    downloadPng.addEventListener(
-        "click",
-        function () {
-
-            if (!svgOutput) {
-
-                return;
-
-            }
+            processingNote.textContent =
+                "Vector conversion failed.";
 
 
-            const svgBlob =
-                new Blob(
-                    [svgOutput],
-                    {
-                        type:
-                            "image/svg+xml;charset=utf-8"
-                    }
-                );
+            engineStatus.textContent =
+                "ENGINE ERROR";
 
 
-            const svgUrl =
-                URL.createObjectURL(
-                    svgBlob
-                );
-
-
-            const image =
-                new Image();
-
-
-            image.onload =
-                function () {
-
-                    const canvas =
-                        document.createElement(
-                            "canvas"
-                        );
-
-
-                    const scale =
-                        2;
-
-
-                    canvas.width =
-                        image.width *
-                        scale;
-
-
-                    canvas.height =
-                        image.height *
-                        scale;
-
-
-                    const ctx =
-                        canvas.getContext(
-                            "2d"
-                        );
-
-
-                    ctx.fillStyle =
-                        "#ffffff";
-
-
-                    ctx.fillRect(
-                        0,
-                        0,
-                        canvas.width,
-                        canvas.height
-                    );
-
-
-                    ctx.drawImage(
-                        image,
-                        0,
-                        0,
-                        canvas.width,
-                        canvas.height
-                    );
-
-
-                    canvas.toBlob(
-                        function (blob) {
-
-                            if (!blob) {
-
-                                return;
-
-                            }
-
-
-                            downloadBlob(
-                                blob,
-                                sourceFileName +
-                                "-vector.png"
-                            );
-
-
-                            showToast(
-                                "PNG downloaded."
-                            );
-
-                        },
-                        "image/png"
-                    );
-
-
-                    URL.revokeObjectURL(
-                        svgUrl
-                    );
-
-                };
-
-
-            image.onerror =
-                function () {
-
-                    URL.revokeObjectURL(
-                        svgUrl
-                    );
-
-
-                    showToast(
-                        "PNG export failed."
-                    );
-
-                };
-
-
-            image.src =
-                svgUrl;
+            showToast(
+                "Vector conversion failed."
+            );
 
         }
-    );
+
+        finally {
+
+            vectorizeButton.disabled =
+                false;
 
 
+            vectorizeButton.textContent =
+                "✦ CREATE VECTOR ARTWORK →";
 
-    /* ==========================================
-       RESET
-    ========================================== */
+        }
 
-    resetButton.addEventListener(
-        "click",
-        resetApp
-    );
+    }, 100);
 
+}
+/* ==========================================
+   SMOOTH MONOCHROME PREPROCESSING
+========================================== */
 
-    function resetApp() {
+function createSmoothMonochrome(
+    imageData,
+    thresholdValue,
+    detailLevel,
+    shouldInvert
+) {
 
-        sourceImage =
-            null;
+    const data =
+        imageData.data;
 
+    const width =
+        imageData.width;
 
-        sourceFile =
-            null;
-
-
-        svgOutput =
-            "";
-
-
-        sourceFileName =
-            "vector-artwork";
-
-
-        imageInput.value =
-            "";
+    const height =
+        imageData.height;
 
 
-        threshold.value =
-            128;
-
-
-        thresholdValue.textContent =
-            "128";
-
-
-        detail.value =
-            5;
-
-
-        detailValue.textContent =
-            "5";
-
-
-        invert.checked =
-            false;
-
-
-        originalPreview.innerHTML =
-            `
-                <div class="empty-state">
-                    <div class="empty-icon">
-                        ▧
-                    </div>
-
-                    <p>
-                        Upload an image to preview
-                    </p>
-                </div>
-            `;
-
-
-        clearVector();
-
-
-        clearAIOutput();
-
-
-        fileName.textContent =
-            "No image selected";
-
-
-        fileSize.textContent =
-            "🔒 Processed in your browser";
-
-
-        vectorizeButton.disabled =
-            true;
-
-
-        processingNote.textContent =
-            "Recommended for Batik: Threshold 110–160 · Detail 4–7";
-
-
-        engineStatus.textContent =
-            "VECTOR ENGINE READY";
-
-
-        showToast(
-            "Workspace reset."
+    const gray =
+        new Float32Array(
+            width * height
         );
 
-    }
 
+    /*
+       Convert RGB → luminance
+    */
 
-
-    /* ==========================================
-       CLEAR VECTOR
-    ========================================== */
-
-    function clearVector() {
-
-        svgOutput =
-            "";
-
-
-        vectorPreview.innerHTML =
-            `
-                <div class="empty-state">
-
-                    <div class="empty-icon">
-                        ✦
-                    </div>
-
-                    <p>
-                        Your vector artwork
-                        will appear here
-                    </p>
-
-                </div>
-            `;
-
-
-        downloadSvg.disabled =
-            true;
-
-
-        downloadPng.disabled =
-            true;
-
-    }
-
-
-
-    /* ==========================================
-       CLEAR AI OUTPUT
-    ========================================== */
-
-    function clearAIOutput() {
-
-        aiImageOutput =
-            "";
-
-
-        downloadAIImage.disabled =
-            true;
-
-    }
-
-
-
-    /* ==========================================
-       DOWNLOAD HELPER
-    ========================================== */
-
-    function downloadBlob(
-        blob,
-        filename
+    for (
+        let i = 0,
+            p = 0;
+        i < data.length;
+        i += 4,
+            p++
     ) {
 
-        const url =
-            URL.createObjectURL(
-                blob
-            );
-
-
-        const link =
-            document.createElement(
-                "a"
-            );
-
-
-        link.href =
-            url;
-
-
-        link.download =
-            filename;
-
-
-        document.body.appendChild(
-            link
-        );
-
-
-        link.click();
-
-
-        link.remove();
-
-
-        setTimeout(
-            function () {
-
-                URL.revokeObjectURL(
-                    url
-                );
-
-            },
-            1000
-        );
-
-    }
-
-
-
-    /* ==========================================
-       REMOVE EXTENSION
-    ========================================== */
-
-    function removeExtension(
-        filename
-    ) {
-
-        return filename.replace(
-            /\.[^/.]+$/,
-            ""
-        );
-
-    }
-
-
-
-    /* ==========================================
-       FORMAT FILE SIZE
-    ========================================== */
-
-    function formatFileSize(
-        bytes
-    ) {
-
-        if (
-            bytes < 1024
-        ) {
-
-            return (
-                bytes +
-                " B"
-            );
-
-        }
-
-
-        if (
-            bytes <
-            1024 * 1024
-        ) {
-
-            return (
-                (
-                    bytes /
-                    1024
-                ).toFixed(1)
-                +
-                " KB"
-            );
-
-        }
-
-
-        return (
+        gray[p] =
             (
-                bytes /
-                (
-                    1024 *
-                    1024
-                )
-            ).toFixed(1)
-            +
-            " MB"
-        );
-
-    }
-
-
-
-    /* ==========================================
-       TOAST
-    ========================================== */
-
-    function showToast(
-        message
-    ) {
-
-        toast.textContent =
-            message;
-
-
-        toast.classList.add(
-            "show"
-        );
-
-
-        clearTimeout(
-            showToast.timer
-        );
-
-
-        showToast.timer =
-            setTimeout(
-                function () {
-
-                    toast.classList.remove(
-                        "show"
-                    );
-
-                },
-                2500
+                data[i] *
+                0.299
+            ) +
+            (
+                data[i + 1] *
+                0.587
+            ) +
+            (
+                data[i + 2] *
+                0.114
             );
 
     }
 
 
+    /*
+       Small blur.
+       Lower detail = more smoothing.
+    */
 
-    /* ==========================================
-       ENGINE CHECK
-    ========================================== */
+    let passes =
+        detailLevel <= 4
+            ? 2
+            : 1;
 
-    window.addEventListener(
-        "load",
-        function () {
+
+    let current =
+        gray;
+
+
+    for (
+        let pass = 0;
+        pass < passes;
+        pass++
+    ) {
+
+        current =
+            blurGray(
+                current,
+                width,
+                height
+            );
+
+    }
+
+
+    /*
+       Apply threshold
+    */
+
+    for (
+        let y = 0;
+        y < height;
+        y++
+    ) {
+
+        for (
+            let x = 0;
+            x < width;
+            x++
+        ) {
+
+            const index =
+                y * width + x;
+
+
+            let value =
+                current[index] >=
+                    thresholdValue
+                    ? 255
+                    : 0;
+
 
             if (
-                typeof ImageTracer ===
-                "undefined"
+                shouldInvert
             ) {
 
-                engineStatus.textContent =
-                    "ENGINE LOAD ERROR";
+                value =
+                    255 -
+                    value;
+
+            }
 
 
-                showToast(
-                    "Vector engine could not load."
-                );
+            const pixel =
+                index * 4;
+
+
+            data[pixel] =
+                value;
+
+            data[pixel + 1] =
+                value;
+
+            data[pixel + 2] =
+                value;
+
+            data[pixel + 3] =
+                255;
+
+        }
+
+    }
+
+
+    return imageData;
+
+}
+/* ==========================================
+   SMALL BLUR
+========================================== */
+
+function blurGray(
+    source,
+    width,
+    height
+) {
+
+    const output =
+        new Float32Array(
+            source.length
+        );
+
+
+    for (
+        let y = 1;
+        y < height - 1;
+        y++
+    ) {
+
+        for (
+            let x = 1;
+            x < width - 1;
+            x++
+        ) {
+
+            const i =
+                y * width + x;
+
+
+            /*
+               Weighted 3x3 blur
+            */
+
+            output[i] =
+                (
+                    source[i] * 4 +
+
+                    source[i - 1] * 2 +
+                    source[i + 1] * 2 +
+
+                    source[i - width] * 2 +
+                    source[i + width] * 2 +
+
+                    source[
+                        i - width - 1
+                    ] +
+
+                    source[
+                        i - width + 1
+                    ] +
+
+                    source[
+                        i + width - 1
+                    ] +
+
+                    source[
+                        i + width + 1
+                    ]
+
+                ) / 16;
+
+        }
+
+    }
+
+
+    return output;
+
+}
+/* ==========================================
+   REMOVE SMALL PIXEL NOISE
+========================================== */
+
+function cleanBinaryNoise(
+    imageData,
+    width,
+    height,
+    detailLevel
+) {
+
+    const data =
+        imageData.data;
+
+
+    /*
+       High detail mode should preserve
+       more tiny Batik elements.
+    */
+
+    const requiredNeighbors =
+        detailLevel >= 8
+            ? 2
+            : 3;
+
+
+    const copy =
+        new Uint8ClampedArray(
+            data
+        );
+
+
+    for (
+        let y = 1;
+        y < height - 1;
+        y++
+    ) {
+
+        for (
+            let x = 1;
+            x < width - 1;
+            x++
+        ) {
+
+            const index =
+                y * width + x;
+
+
+            const pixel =
+                index * 4;
+
+
+            const current =
+                copy[pixel];
+
+
+            let same =
+                0;
+
+
+            for (
+                let dy = -1;
+                dy <= 1;
+                dy++
+            ) {
+
+                for (
+                    let dx = -1;
+                    dx <= 1;
+                    dx++
+                ) {
+
+                    if (
+                        dx === 0 &&
+                        dy === 0
+                    ) {
+                        continue;
+                    }
+
+
+                    const neighbor =
+                        (
+                            (
+                                y + dy
+                            ) *
+                            width +
+                            (
+                                x + dx
+                            )
+                        ) * 4;
+
+
+                    if (
+                        copy[
+                            neighbor
+                        ] ===
+                        current
+                    ) {
+
+                        same++;
+
+                    }
+
+                }
+
+            }
+
+
+            /*
+               Isolated pixel →
+               use opposite color.
+            */
+
+            if (
+                same <
+                requiredNeighbors
+            ) {
+
+                const value =
+                    current === 255
+                        ? 0
+                        : 255;
+
+
+                data[pixel] =
+                    value;
+
+                data[pixel + 1] =
+                    value;
+
+                data[pixel + 2] =
+                    value;
 
             }
 
         }
+
+    }
+
+
+    return imageData;
+
+}
+/* ==========================================
+   VECTOR CURVE QUALITY
+========================================== */
+
+function getTraceTolerance(
+    detailLevel
+) {
+
+    /*
+       Lower value =
+       closer / more accurate curves.
+
+       But too low can create
+       massive SVG files.
+    */
+
+    const map = {
+
+        1: 2.4,
+        2: 2.1,
+        3: 1.8,
+        4: 1.5,
+        5: 1.25,
+        6: 1.05,
+        7: 0.85,
+        8: 0.65,
+        9: 0.48,
+        10: 0.35
+
+    };
+
+
+    return (
+        map[
+            detailLevel
+        ] ||
+        1
     );
 
-</script>
+}

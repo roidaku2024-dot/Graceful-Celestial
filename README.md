@@ -4,7 +4,7 @@ A browser-first Batik and textile image studio with three workflows:
 
 - **8K Resolution** sends a safely reduced source image to the server-side Replicate Real-ESRGAN integration. It selects a practical 2× or 4× model scale while targeting a 7,680px long edge when possible.
 - **Batik Outline** creates a black and white contour SVG locally in the browser.
-- **Photo → Vector Art** creates smooth, editable, black and white SVG paths locally with ImageTracerJS.
+- **Photo → Vector Art** offers a professional **Color** / **Black & White** palette switch. Color mode reduces the source to a small, usable palette while preserving its principal Batik colors in editable SVG paths; Black & White mode retains the clean monochrome workflow. Both SVG and PNG exports preserve the selected vector colors.
 
 ## Configuration
 

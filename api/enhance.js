@@ -2,6 +2,14 @@ const MAX_IMAGE_BYTES = 14 * 1024 * 1024;
 const POLL_LIMIT = 45;
 const POLL_DELAY = 2000;
 
+// The frontend sends a base64 image payload. Vercel's default body-parser limit
+// is smaller than a practical image payload, so keep this explicit and bounded.
+export const config = {
+  api: {
+    bodyParser: { sizeLimit: "15mb" }
+  }
+};
+
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
   const { image, scale = 4, faceEnhance = false } = req.body || {};
@@ -16,6 +24,9 @@ export default async function handler(req, res) {
       if (prediction.status === "succeeded") {
         const output = Array.isArray(prediction.output) ? prediction.output[0] : prediction.output;
         if (typeof output !== "string" || !/^https:\/\//.test(output)) return res.status(502).json({ error: "The enhancement provider returned an invalid image." });
+        // Keep `output` for compatibility with existing clients and expose a
+        // descriptive field so the browser has one unambiguous image URL.
+        return res.status(200).json({ success: true, output, imageUrl: output, scale: safeScale });
         return res.status(200).json({ success: true, output, scale: safeScale });
       }
       if (["failed", "canceled"].includes(prediction.status)) return res.status(502).json({ error: prediction.error || "AI enhancement failed." });
@@ -32,6 +43,15 @@ export default async function handler(req, res) {
 function isValidImage(image) {
   if (typeof image !== "string" || image.length > Math.ceil(MAX_IMAGE_BYTES * 4 / 3) + 128) return false;
   return /^data:image\/(jpeg|png|webp);base64,[a-z0-9+/=]+$/i.test(image);
+}
+
+async function replicate(url, token, options = {}) {
+  const response = await fetch(url, { ...options, headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", Prefer: "wait=10", ...(options.headers || {}) } });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload.detail || payload.error || `Replicate request failed (${response.status})`);
+  return payload;
+}
+
 }
 
 async function replicate(url, token, options = {}) {

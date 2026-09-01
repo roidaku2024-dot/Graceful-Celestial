@@ -39,6 +39,7 @@
         <div class="section-heading"><span>02</span><div><p class="eyebrow" id="toolKicker">AI UPSCALE</p><h2 id="toolTitle">Prepare an 8K enhancement</h2></div></div>
         <p id="toolDescription">Uses the secure server-side Replicate workflow. The highest practical scale is selected to target a 7,680px long edge when possible.</p>
         <div class="controls" id="traceControls" hidden>
+          <fieldset class="color-mode"><legend>Vector palette</legend><label><input type="radio" name="colorMode" value="color" checked> COLOR <small>Preserve key source colors</small></label><label><input type="radio" name="colorMode" value="mono"> BLACK &amp; WHITE <small>Clean monochrome artwork</small></label></fieldset>
           <label>Threshold <output id="thresholdOutput">136</output><input id="threshold" type="range" min="40" max="220" value="136"></label>
           <label>Motif detail <output id="detailOutput">7</output><input id="detail" type="range" min="1" max="10" value="7"></label>
           <label class="check"><input id="invert" type="checkbox"> Invert black and white</label>
@@ -52,6 +53,7 @@
       </section>
       <section class="panel export-panel">
         <div><p class="eyebrow">03 EXPORT</p><h2>Download your result</h2></div>
+        <div class="exports"><button id="downloadPrimary" type="button" disabled>DOWNLOAD RESULT</button><button id="downloadSvg" type="button" disabled>DOWNLOAD SVG</button><button id="downloadPng" type="button" disabled>DOWNLOAD PNG</button><button id="resetButton" type="button">RESET</button></div>
         <div class="exports"><button id="downloadPrimary" type="button" disabled>DOWNLOAD RESULT</button><button id="downloadSvg" type="button" disabled>DOWNLOAD SVG</button><button id="resetButton" type="button">RESET</button></div>
       </section>
     </div>

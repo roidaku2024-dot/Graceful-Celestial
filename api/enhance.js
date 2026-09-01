@@ -27,6 +27,7 @@ export default async function handler(req, res) {
         // Keep `output` for compatibility with existing clients and expose a
         // descriptive field so the browser has one unambiguous image URL.
         return res.status(200).json({ success: true, output, imageUrl: output, scale: safeScale });
+        return res.status(200).json({ success: true, output, scale: safeScale });
       }
       if (["failed", "canceled"].includes(prediction.status)) return res.status(502).json({ error: prediction.error || "AI enhancement failed." });
       if (!prediction.id || attempt === POLL_LIMIT) return res.status(504).json({ error: "AI processing timed out. Please try again." });
@@ -42,6 +43,15 @@ export default async function handler(req, res) {
 function isValidImage(image) {
   if (typeof image !== "string" || image.length > Math.ceil(MAX_IMAGE_BYTES * 4 / 3) + 128) return false;
   return /^data:image\/(jpeg|png|webp);base64,[a-z0-9+/=]+$/i.test(image);
+}
+
+async function replicate(url, token, options = {}) {
+  const response = await fetch(url, { ...options, headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", Prefer: "wait=10", ...(options.headers || {}) } });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload.detail || payload.error || `Replicate request failed (${response.status})`);
+  return payload;
+}
+
 }
 
 async function replicate(url, token, options = {}) {

@@ -1,149 +1,44 @@
+const MAX_IMAGE_BYTES = 14 * 1024 * 1024;
+const POLL_LIMIT = 45;
+const POLL_DELAY = 2000;
+
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({
-      error: "Method not allowed"
-    });
-  }
-
+  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  const { image, scale = 4, faceEnhance = false } = req.body || {};
+  if (!isValidImage(image)) return res.status(400).json({ error: "Provide a JPG, PNG, or WebP image under 14 MB." });
+  const token = process.env.REPLICATE_API_TOKEN;
+  if (!token) return res.status(500).json({ error: "Image enhancement is not configured on this deployment." });
+  const requestedScale = Number(scale);
+  const safeScale = [2, 4].includes(requestedScale) ? requestedScale : 4;
   try {
-    const {
-      image,
-      scale = 4,
-      faceEnhance = false
-    } = req.body;
-
-    if (!image) {
-      return res.status(400).json({
-        error: "Image is required"
-      });
-    }
-
-    const token =
-      process.env.REPLICATE_API_TOKEN;
-
-    if (!token) {
-      return res.status(500).json({
-        error: "REPLICATE_API_TOKEN is missing"
-      });
-    }
-
-    const createResponse = await fetch(
-      "https://api.replicate.com/v1/models/nightmareai/real-esrgan/predictions",
-      {
-        method: "POST",
-
-        headers: {
-          "Authorization":
-            `Bearer ${token}`,
-
-          "Content-Type":
-            "application/json",
-
-          "Prefer":
-            "wait=60"
-        },
-
-        body: JSON.stringify({
-          input: {
-            image: image,
-            scale: Number(scale),
-            face_enhance:
-              Boolean(faceEnhance)
-          }
-        })
+    let prediction = await replicate("https://api.replicate.com/v1/models/nightmareai/real-esrgan/predictions", token, { method: "POST", body: JSON.stringify({ input: { image, scale: safeScale, face_enhance: Boolean(faceEnhance) } }) });
+    for (let attempt = 0; attempt <= POLL_LIMIT; attempt += 1) {
+      if (prediction.status === "succeeded") {
+        const output = Array.isArray(prediction.output) ? prediction.output[0] : prediction.output;
+        if (typeof output !== "string" || !/^https:\/\//.test(output)) return res.status(502).json({ error: "The enhancement provider returned an invalid image." });
+        return res.status(200).json({ success: true, output, scale: safeScale });
       }
-    );
-
-    let prediction =
-      await createResponse.json();
-
-    if (!createResponse.ok) {
-      return res.status(
-        createResponse.status
-      ).json({
-        error:
-          prediction.detail ||
-          prediction.error ||
-          "Replicate request failed"
-      });
+      if (["failed", "canceled"].includes(prediction.status)) return res.status(502).json({ error: prediction.error || "AI enhancement failed." });
+      if (!prediction.id || attempt === POLL_LIMIT) return res.status(504).json({ error: "AI processing timed out. Please try again." });
+      await sleep(POLL_DELAY);
+      prediction = await replicate(`https://api.replicate.com/v1/predictions/${prediction.id}`, token);
     }
-
-    if (
-      prediction.status === "succeeded" &&
-      prediction.output
-    ) {
-      return res.status(200).json({
-        success: true,
-        output: prediction.output
-      });
-    }
-
-    const maxAttempts = 50;
-
-    for (
-      let i = 0;
-      i < maxAttempts;
-      i++
-    ) {
-      await sleep(2000);
-
-      const pollResponse =
-        await fetch(
-          `https://api.replicate.com/v1/predictions/${prediction.id}`,
-          {
-            headers: {
-              "Authorization":
-                `Bearer ${token}`
-            }
-          }
-        );
-
-      prediction =
-        await pollResponse.json();
-
-      if (
-        prediction.status ===
-        "succeeded"
-      ) {
-        return res.status(200).json({
-          success: true,
-          output: prediction.output
-        });
-      }
-
-      if (
-        prediction.status ===
-          "failed" ||
-        prediction.status ===
-          "canceled"
-      ) {
-        return res.status(500).json({
-          error:
-            prediction.error ||
-            "AI enhancement failed"
-        });
-      }
-    }
-
-    return res.status(504).json({
-      error:
-        "AI processing timeout"
-    });
-
   } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      error:
-        error.message ||
-        "Server error"
-    });
+    console.error("Replicate enhancement error:", error.message);
+    return res.status(502).json({ error: "The image enhancement service is temporarily unavailable." });
   }
 }
 
-function sleep(ms) {
-  return new Promise(
-    resolve =>
-      setTimeout(resolve, ms)
-  );
+function isValidImage(image) {
+  if (typeof image !== "string" || image.length > Math.ceil(MAX_IMAGE_BYTES * 4 / 3) + 128) return false;
+  return /^data:image\/(jpeg|png|webp);base64,[a-z0-9+/=]+$/i.test(image);
 }
+
+async function replicate(url, token, options = {}) {
+  const response = await fetch(url, { ...options, headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", Prefer: "wait=10", ...(options.headers || {}) } });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload.detail || payload.error || `Replicate request failed (${response.status})`);
+  return payload;
+}
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
